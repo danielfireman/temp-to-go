@@ -24,11 +24,11 @@ func main() {
 		log.Fatalf("ENCRYPTION_KEY must be 32-bytes long. Current key is \"%s\" which is %d bytes long.", key, len(key))
 	}
 	router := httprouter.New()
-	router.POST("/indoortemp", tempInside(key))
+	router.POST("/indoortemp", indoorTemp(key))
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
-func tempInside(key []byte) httprouter.Handle {
+func indoorTemp(key []byte) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
