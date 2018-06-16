@@ -11,3 +11,14 @@
 * More resources:
      * [blog.brockman.io::Using Golang With NodeMCU](http://blog.brockman.io/?p=28)
      * [Gobot.io::examples](https://github.com/hybridgroup/gobot/tree/master/examples)
+     
+# Run the robot
+
+* Install [dep](https://github.com/golang/dep)
+* Run the following commands:
+
+```bash
+dep init
+dep ensure
+ENCRYPTION_KEY="the-key-has-to-be-32-bytes-long!" SERVER_URL=http://127.0.0.1:8080/indoortemp FREQUENCY=10s run main.go 192.168.0.67:3030
+```
