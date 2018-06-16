@@ -7,10 +7,10 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -26,11 +26,10 @@ func main() {
 	if len(key) != 32 {
 		log.Fatalf("ENCRYPTION_KEY must be 32-bytes long. Current key is \"%s\" which is %d bytes long.", key, len(key))
 	}
-	u, err := url.Parse(os.Getenv("SERVER_URL"))
-	if err != nil {
-		log.Fatalf("Invalid SERVER_URL (\"%s\"):%q", os.Getenv("SERVER_URL"), err)
+	serverURL := os.Getenv("SERVER_URL")
+	if serverURL == "" {
+		log.Fatalf("SERVER_URL can not be empty.")
 	}
-	serverURL := u.String()
 	frequency, err := time.ParseDuration(os.Getenv("FREQUENCY"))
 	if err != nil {
 		log.Fatalf("Invalid FREQUENCY (\"%s\"):%q", os.Getenv("FREQUENCY"), err)
@@ -44,7 +43,9 @@ func main() {
 		[]gobot.Device{tempSensor},
 		func() {
 			gobot.Every(frequency, func() {
-				send(serverURL, tempSensor.Temperature(), key)
+				if err := send(serverURL, tempSensor.Temperature(), key); err != nil {
+					log.Println(err)
+				}
 			})
 		},
 	)
@@ -61,17 +62,18 @@ var client = &http.Client{
 	},
 }
 
-func send(url string, temp float64, key []byte) error {
+func send(u string, temp float64, key []byte) error {
 	e, err := encrypt([]byte(strconv.FormatFloat(temp, 'f', -1, 64)), key)
 	if err != nil {
 		return fmt.Errorf("Error encrypting temperature: %q", err)
 	}
-	resp, err := client.Post(url, "application/octet-stream", bytes.NewReader([]byte(e)))
+	resp, err := client.Post(u, "application/octet-stream", bytes.NewReader([]byte(e)))
 	if err != nil {
-		return fmt.Errorf("Error trying to send POST request: %q", err)
+		return fmt.Errorf("Error trying to send POST request: %q. URL:%s", err, u)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Invalid status code in POST request: %d", resp.StatusCode)
+		b, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("Invalid status code in POST request: %d. Message: %s", resp.StatusCode, string(b))
 	}
 	return nil
 }
