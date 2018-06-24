@@ -1,1 +1,2 @@
 web: web
+worker: worker
