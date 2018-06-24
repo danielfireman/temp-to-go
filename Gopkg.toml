@@ -1,0 +1,15 @@
+ignored = [
+	"github.com/danielfireman/temp-to-go/device*",
+	"github.com/danielfireman/temp-to-go/device/robot"]
+
+[prune]
+  unused-packages = true
+  go-tests = true
+  non-go = true
+
+[metadata.heroku]
+  root-package = "github.com/danielfireman/temp-to-go"
+  go-version = "go1.10"
+  install = [ "./server/..."]
+  ensure = "true"
+  additional-tools = ["github.com/mattes/migrate"]
