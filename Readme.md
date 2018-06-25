@@ -1,9 +1,6 @@
 # Temperature to go
 
-> Status: Just starting
-
-Would you always wanted to know when to turn on the fan or the air conditioner during the night? Good news is that your problem
-will be solved soon!
+Would you always wanted to know when to turn on the fan or the air conditioner during the night? Good news is that your problem will be solved soon!
 
 Besides solve this very important problem, our small projects has some other goals:
 
@@ -11,6 +8,15 @@ Besides solve this very important problem, our small projects has some other goa
 * Use only free, open source libraries
 * Cheap devices
 * Run on free infrastructure
+
+# Status
+
+* Device: Done :grin:
+* HTTP API (bedroom temperature): Started :smirk:
+* Fetch Current Weather Worker: Started :smirk:
+* Fetch Weather Forecast and Prediction Worker: Not started :unamused:
+* Fan control HTTP FE: Not Started :unamused:
+* Public HTTP FE: Not started :unamused:
 
 # Design
 
@@ -37,4 +43,3 @@ Besides solve this very important problem, our small projects has some other goa
 * Client
      * [GopherJS](https://github.com/gopherjs/gopherjs)
      * [Frappé-charts](https://github.com/cnguy/gopherjs-frappe-charts)
-    
