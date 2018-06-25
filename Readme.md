@@ -9,7 +9,8 @@ Besides solve this very important problem, our small projects has some other goa
 
 * Fully implemented in Go (yes, from the device to frontend)
 * Use only free, open source libraries
-* Run on free infrastructure (and prefferably cheap devices)
+* Cheap devices
+* Run on free infrastructure
 
 # Design
 
@@ -26,7 +27,9 @@ Besides solve this very important problem, our small projects has some other goa
 
 * Server/Worker
      * Platform
-          * [Heroku](https://www.heroku.com/)
+          * [Heroku](https://www.heroku.com/): Cloud server
+          * [Namecheap](https://www.namecheap.com/): Domain names (mybedroom.live and meuquarto.live)
+          * [Cloudflare](https://www.cloudflare.com/): Better DNS, DoS protection, edge caching and more
      * Software
           * [Gonum](https://github.com/gonum/gonum), in particular the [Linear Regression](https://godoc.org/gonum.org/v1/gonum/stat#LinearRegression)
           
