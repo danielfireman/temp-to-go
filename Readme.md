@@ -36,6 +36,8 @@ Besides solve this very important problem, our small projects has some other goa
           * [Heroku](https://www.heroku.com/): Cloud server
           * [Namecheap](https://www.namecheap.com/): Domain names (mybedroom.live and meuquarto.live)
           * [Cloudflare](https://www.cloudflare.com/): Better DNS, DoS protection, edge caching and more
+          * [Heroku](https://www.heroku.com/)
+          * Database: [MongoDB](https://www.mongodb.com/), [mongoLab Addon](https://elements.heroku.com/addons/mongolab)
      * Software
           * [Gonum](https://github.com/gonum/gonum), in particular the [Linear Regression](https://godoc.org/gonum.org/v1/gonum/stat#LinearRegression)
           
