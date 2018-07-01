@@ -33,15 +33,16 @@ Besides solve this very important problem, our small projects has some other goa
 
 * Server/Worker
      * Platform
-          * [Heroku](https://www.heroku.com/): Cloud server
+          * [Heroku](https://www.heroku.com/): Cloud provider
           * [Namecheap](https://www.namecheap.com/): Domain names (mybedroom.live and meuquarto.live)
           * [Cloudflare](https://www.cloudflare.com/): Better DNS, DoS protection, edge caching and more
-          * [Heroku](https://www.heroku.com/)
-          * Database: [MongoDB](https://www.mongodb.com/), [mongoLab Addon](https://elements.heroku.com/addons/mongolab)
+          * [MongoDB](https://www.mongodb.com/): [mongoLab Addon](https://elements.heroku.com/addons/mongolab)
      * Software
+          * [mgo](https://labix.org/mgo)
           * [Gonum](https://github.com/gonum/gonum), in particular the [Linear Regression](https://godoc.org/gonum.org/v1/gonum/stat#LinearRegression)
           
 
 * Client
      * [GopherJS](https://github.com/gopherjs/gopherjs)
      * [Frappé-charts](https://github.com/cnguy/gopherjs-frappe-charts)
+    
