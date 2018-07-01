@@ -10,25 +10,38 @@ import (
 )
 
 type clouds struct {
+	//  Cloudiness, %
 	All float32 `json:"all,omitempty"`
 }
 
 type mainn struct {
-	Temp     float32 `json:"temp,omitempty"`
-	Humidity float32 `json:"humidity,omitempty"`
+	Temp     float32 `json:"temp,omitempty"`     // Temperature, Celsius
+	Humidity float32 `json:"humidity,omitempty"` // Humidity, %
+}
+
+type wind struct {
+	Speed     float32 `json:"speed,omitempty"` // Wind speed, meter/sec
+	Direction float32 `json:"deg,omitempty"`   // Wind direction, degrees (meteorological)
+}
+
+type rain struct {
+	ThreeHours float32 `json:"3h,omitempty"` // Rain volume for the last 3 hours
 }
 
 type weather struct {
-	ID          int    `json:"id,omitempty"`
-	Main        string `json:"main,omitempty"`
-	Description string `json:"description,omitempty"`
-	Icon        string `json:"icon,omitempty"`
+	ID          int    `json:"id,omitempty"`          // Weather condition id
+	Main        string `json:"main,omitempty"`        // Group of weather parameters (Rain, Snow, Extreme etc.)
+	Description string `json:"description,omitempty"` // Weather condition within the group
+	Icon        string `json:"icon,omitempty"`        // Weather icon id
 }
 
 type openWeatherMapResponse struct {
 	Weather []weather `json:"weather,omitempty"`
 	Main    mainn     `json:"main,omitempty"`
 	Clouds  clouds    `json:"clouds,omitempty"`
+	Wind    wind      `json:"wind,omitempty"`
+	Rain    rain      `json:"rain,omitempty"`
+	Dt      int64     `json:"dt,omitempty"` // Time of data calculation, unix, UTC
 }
 
 func main() {
