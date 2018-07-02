@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const scheduledInfoDBCollectionName = "sidb"
@@ -17,17 +18,18 @@ type ScheduledInfoDB struct {
 }
 
 // NewCurrentWeather updates the ScheduledInfoDB with the new information about the current weather.
-func (db *ScheduledInfoDB) NewCurrentWeather(w CurrentWeather) error {
+func (db *ScheduledInfoDB) NewCurrentWeather(cw CurrentWeather) error {
 	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
-	return db.collection.Insert(
-		struct {
-			TimestampHour  time.Time      `bson:"timestamp_hour,omitempty"`
-			CurrentWeather CurrentWeather `bson:"current_weather,omitempty"`
-		}{
-			TimestampHour:  time.Now().In(time.UTC),
-			CurrentWeather: w,
+	now := time.Now().In(time.UTC)
+	th := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
+	_, err := db.collection.Upsert(
+		bson.M{"timestamp_hour": th},
+		bson.M{
+			"timestamp_hour":  th,
+			"current_weather": cw,
 		},
 	)
+	return err
 }
 
 // Close terminates the ScheduledInfoDB session. It's a runtime error to use a session
@@ -55,22 +57,22 @@ func DialScheduledInfoDB(uri string) (*ScheduledInfoDB, error) {
 
 // Wind stores information about the wind.
 type Wind struct {
-	Speed     float32 `bson:"speed"` // Wind speed, meter/sec
-	Direction float32 `bson:"deg"`   // Wind direction, degrees (meteorological)
+	Speed     float32 `bson:"speed,omitempty"` // Wind speed, meter/sec
+	Direction float32 `bson:"deg,omitempty"`   // Wind direction, degrees (meteorological)
 }
 
 // WeatherDescription stores overall information to describe the weather. That include text, images and so on.
 type WeatherDescription struct {
-	Description string `bson:"description"` // Weather condition within the group
-	Icon        string `bson:"icon"`        // Weather icon id
+	Text string `bson:"text,omitempty"` // Weather condition within the group
+	Icon string `bson:"icon,omitempty"` // Weather icon id
 }
 
 // CurrentWeather stores the complete information about the weather at a certain time.
 type CurrentWeather struct {
-	Description WeatherDescription `json:"weather"`
-	Wind        Wind               `bson:"wind"`
-	Temp        float32            `bson:"temp"`       // Temperature, Celsius
-	Humidity    float32            `bson:"humidity"`   // Humidity, %
-	Rain        float32            `bson:"rain"`       // Rain volume for the last hours
-	Cloudiness  float32            `bson:"cloudiness"` // Cloudiness, %
+	Description WeatherDescription `bson:"description,omitempty"`
+	Wind        Wind               `bson:"wind,omitempty"`
+	Temp        float32            `bson:"temp,omitempty"`       // Temperature, Celsius
+	Humidity    float32            `bson:"humidity,omitempty"`   // Humidity, %
+	Rain        float32            `bson:"rain,omitempty"`       // Rain volume for the last hours
+	Cloudiness  float32            `bson:"cloudiness,omitempty"` // Cloudiness, %
 }
