@@ -41,7 +41,7 @@ func main() {
 		log.Fatalf("Error unmarshalling OMW response: %q", err)
 	}
 	log.Printf("Succefully feched response from OWM: %+v\n", omwResp)
-	cw := db.CurrentWeather{
+	ws := db.WeatherStatus{
 		Description: db.WeatherDescription{
 			Text: omwResp.Weather[0].Description,
 			Icon: omwResp.Weather[0].Icon,
@@ -55,10 +55,10 @@ func main() {
 		Rain:       round(omwResp.Rain.ThreeHours),
 		Cloudiness: round(omwResp.Clouds.All),
 	}
-	if err := scheddb.NewCurrentWeather(cw); err != nil {
+	if err := scheddb.StoreWeatherStatus(ws); err != nil {
 		log.Fatalf("Error updating ScheduledInfoDB: %q", err)
 	}
-	log.Printf("Succefully updated ScheduledInfoDB: %+v\n", cw)
+	log.Printf("Succefully updated ScheduledInfoDB: %+v\n", ws)
 }
 
 type clouds struct {

@@ -17,8 +17,8 @@ type ScheduledInfoDB struct {
 	collection *mgo.Collection
 }
 
-// NewCurrentWeather updates the ScheduledInfoDB with the new information about the current weather.
-func (db *ScheduledInfoDB) NewCurrentWeather(cw CurrentWeather) error {
+// StoreWeatherStatus updates the ScheduledInfoDB with the new information about the current weather.
+func (db *ScheduledInfoDB) StoreWeatherStatus(cw WeatherStatus) error {
 	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
 	now := time.Now().In(time.UTC)
 	th := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
@@ -67,8 +67,8 @@ type WeatherDescription struct {
 	Icon string `bson:"icon,omitempty"` // Weather icon id
 }
 
-// CurrentWeather stores the complete information about the weather at a certain time.
-type CurrentWeather struct {
+// WeatherStatus stores the complete information about the weather at a certain time.
+type WeatherStatus struct {
 	Description WeatherDescription `bson:"description,omitempty"`
 	Wind        Wind               `bson:"wind,omitempty"`
 	Temp        float32            `bson:"temp,omitempty"`       // Temperature, Celsius
