@@ -17,16 +17,34 @@ type StatusDB struct {
 	collection *mgo.Collection
 }
 
-// StoreWeatherStatus updates the ScheduledInfoDB with the new information about the current weather.
-func (db *StatusDB) StoreWeatherStatus(cw WeatherStatus) error {
+// StoreWeatherStatus updates the StatusDB with the new information about the current weather.
+func (db *StatusDB) StoreWeatherStatus(ws WeatherStatus) error {
+	return db.store(hourUTC(time.Now()), "weather", ws)
+}
+
+// StoreBedroomTemperature updates the StatusDB with the new bedroom temperature.
+func (db *StatusDB) StoreBedroomTemperature(temp float32) error {
+	now := hourUTC(time.Now())
+	var s status
+	if err := db.collection.Find(bson.M{"timestamp_hour": now}).One(&s); err != nil {
+		return err
+	}
+	s.Bedroom.Temp = temp
+	return db.store(now, "bedroom", s.Bedroom)
+}
+
+func hourUTC(t time.Time) time.Time {
+	tUTC := t.In(time.UTC)
+	return time.Date(tUTC.Year(), tUTC.Month(), tUTC.Day(), tUTC.Hour(), 0, 0, 0, tUTC.Location())
+}
+
+func (db *StatusDB) store(t time.Time, field string, val interface{}) error {
 	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
-	now := time.Now().In(time.UTC)
-	th := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
 	_, err := db.collection.Upsert(
-		bson.M{"timestamp_hour": th},
+		bson.M{"timestamp_hour": t},
 		bson.M{
-			"timestamp_hour":  th,
-			"current_weather": cw,
+			"timestamp_hour": t,
+			field:            val,
 		},
 	)
 	return err
@@ -75,4 +93,15 @@ type WeatherStatus struct {
 	Humidity    float32            `bson:"humidity,omitempty"`   // Humidity, %
 	Rain        float32            `bson:"rain,omitempty"`       // Rain volume for the last hours
 	Cloudiness  float32            `bson:"cloudiness,omitempty"` // Cloudiness, %
+}
+
+// BedroomStatus stores information about the bedroom.
+type BedroomStatus struct {
+	Temp float32 `bson:"temp,omitempty"` // Temperature, Celsius
+	Fan  byte    `bson:"fan,omitempty"`  // On, Off (1, 0)
+}
+
+type status struct {
+	Bedroom BedroomStatus `bson:"bedroom,omitempty"`
+	Weather WeatherStatus `bson:"weather,omitempty"`
 }
