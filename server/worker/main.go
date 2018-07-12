@@ -21,11 +21,11 @@ func main() {
 	if mgoURI == "" {
 		log.Fatalf("Invalid MONGODB_URI: %s", owmKey)
 	}
-	scheddb, err := db.DialScheduledInfoDB(mgoURI)
+	sdb, err := db.DialStatusDB(mgoURI)
 	if err != nil {
 		log.Fatalf("Error connecting to ScheduledInfoDB: %s", owmKey)
 	}
-	defer scheddb.Close()
+	defer sdb.Close()
 	log.Println("Connected to ScheduledInfoDB.")
 	resp, err := http.Get(fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?units=metric&q=Maceio,BR&appid=%s", owmKey))
 	if err != nil {
@@ -55,7 +55,7 @@ func main() {
 		Rain:       round(omwResp.Rain.ThreeHours),
 		Cloudiness: round(omwResp.Clouds.All),
 	}
-	if err := scheddb.StoreWeatherStatus(ws); err != nil {
+	if err := sdb.StoreWeatherStatus(ws); err != nil {
 		log.Fatalf("Error updating ScheduledInfoDB: %q", err)
 	}
 	log.Printf("Succefully updated ScheduledInfoDB: %+v\n", ws)

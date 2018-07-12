@@ -8,17 +8,17 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-const scheduledInfoDBCollectionName = "sidb"
+const statusDBCollectionName = "sdb"
 
-// ScheduledInfoDB stores the result of the collection of information that happens at a pre-determined
+// StatusDB stores the result of the collection of information that happens at a pre-determined
 // schedule. For instance, fetching the current weather information and the bedroom temperature.
-type ScheduledInfoDB struct {
+type StatusDB struct {
 	session    *mgo.Session
 	collection *mgo.Collection
 }
 
 // StoreWeatherStatus updates the ScheduledInfoDB with the new information about the current weather.
-func (db *ScheduledInfoDB) StoreWeatherStatus(cw WeatherStatus) error {
+func (db *StatusDB) StoreWeatherStatus(cw WeatherStatus) error {
 	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
 	now := time.Now().In(time.UTC)
 	th := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
@@ -34,12 +34,12 @@ func (db *ScheduledInfoDB) StoreWeatherStatus(cw WeatherStatus) error {
 
 // Close terminates the ScheduledInfoDB session. It's a runtime error to use a session
 // after it has been closed.
-func (db *ScheduledInfoDB) Close() {
+func (db *StatusDB) Close() {
 	db.session.Close()
 }
 
-// DialScheduledInfoDB sets up a connection to the database specified by the passed-in URI.
-func DialScheduledInfoDB(uri string) (*ScheduledInfoDB, error) {
+// DialStatusDB sets up a connection to the database specified by the passed-in URI.
+func DialStatusDB(uri string) (*StatusDB, error) {
 	info, err := mgo.ParseURL(uri)
 	if err != nil {
 		return nil, fmt.Errorf("invalid db URI:\"%s\" err:%q", uri, err)
@@ -49,9 +49,9 @@ func DialScheduledInfoDB(uri string) (*ScheduledInfoDB, error) {
 		return nil, err
 	}
 	s.SetMode(mgo.Monotonic, true)
-	return &ScheduledInfoDB{
+	return &StatusDB{
 		session:    s,
-		collection: s.DB(info.Database).C(scheduledInfoDBCollectionName),
+		collection: s.DB(info.Database).C(statusDBCollectionName),
 	}, nil
 }
 
