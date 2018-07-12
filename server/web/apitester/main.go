@@ -17,6 +17,9 @@ import (
 )
 
 func main() {
+	if len(os.Args) == 1 {
+		log.Fatal("Missing message argument")
+	}
 	key := []byte(os.Getenv("ENCRYPTION_KEY"))
 	if len(key) != 32 {
 		log.Fatalf("ENCRYPTION_KEY must be 32-bytes long. Current key is \"%s\" which is %d bytes long.", key, len(key))
@@ -25,7 +28,6 @@ func main() {
 	if serverURL == "" {
 		log.Fatalf("SERVER_URL can not be empty.")
 	}
-
 	e, err := encrypt([]byte(os.Args[1]), key)
 	if err != nil {
 		log.Fatalf("Error encrypting temperature: %q\n", err)
