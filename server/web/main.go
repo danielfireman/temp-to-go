@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/danielfireman/temp-to-go/server/db"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -23,12 +24,21 @@ func main() {
 	if len(key) != 32 {
 		log.Fatalf("ENCRYPTION_KEY must be 32-bytes long. Current key is \"%s\" which is %d bytes long.", key, len(key))
 	}
+	mgoURI := os.Getenv("MONGODB_URI")
+	if mgoURI == "" {
+		log.Fatalf("Invalid MONGODB_URI: %s", mgoURI)
+	}
+	sdb, err := db.DialStatusDB(mgoURI)
+	if err != nil {
+		log.Fatalf("Error connecting to StatusDB: %s", mgoURI)
+	}
+	defer sdb.Close()
 	router := httprouter.New()
-	router.POST("/indoortemp", indoorTemp(key))
+	router.POST("/indoortemp", indoorTemp(key, sdb))
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
-func indoorTemp(key []byte) httprouter.Handle {
+func indoorTemp(key []byte, db *db.StatusDB) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -41,12 +51,17 @@ func indoorTemp(key []byte) httprouter.Handle {
 			http.Error(w, fmt.Sprintf("Error decrypting request body: %q", err), http.StatusForbidden)
 			return
 		}
-		temp, err := strconv.ParseFloat(string(d), 64)
+		temp, err := strconv.ParseFloat(string(d), 32)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Error request body: %q", err), http.StatusBadRequest)
 			return
 		}
-		fmt.Println(temp)
+		if err := db.StoreBedroomTemperature(float32(temp)); err != nil {
+			log.Printf("[Error] StoreBedroomTemperature: %q\n", err)
+			http.Error(w, "Error processing request.", http.StatusInternalServerError)
+			return
+		}
+		fmt.Println("Temperature stored successfully.")
 	}
 }
 
