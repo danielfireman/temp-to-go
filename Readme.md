@@ -12,7 +12,7 @@ Besides solve this very important problem, our small projects has some other goa
 # Status
 
 * Device: Done :grin:
-* HTTP API (bedroom temperature): Started :smirk:
+* HTTP API (bedroom temperature): Done :grin:
 * Fetch Current Weather Worker: Started :smirk:
 * Fetch Weather Forecast and Prediction Worker: Not started :unamused:
 * Fan control HTTP FE: Not Started :unamused:
