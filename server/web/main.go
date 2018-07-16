@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/danielfireman/temp-to-go/server/status"
 	"github.com/julienschmidt/httprouter"
@@ -56,7 +57,7 @@ func indoorTemp(key []byte, db *status.DB) httprouter.Handle {
 			http.Error(w, fmt.Sprintf("Error request body: %q", err), http.StatusBadRequest)
 			return
 		}
-		if err := db.StoreBedroomTemperature(float32(temp)); err != nil {
+		if err := db.StoreBedroomTemperature(time.Now(), float32(temp)); err != nil {
 			log.Printf("[Error] StoreBedroomTemperature: %q\n", err)
 			http.Error(w, "Error processing request.", http.StatusInternalServerError)
 			return
