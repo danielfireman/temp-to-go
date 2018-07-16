@@ -11,7 +11,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/danielfireman/temp-to-go/server/db"
+	"github.com/danielfireman/temp-to-go/server/status"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -28,7 +28,7 @@ func main() {
 	if mgoURI == "" {
 		log.Fatalf("Invalid MONGODB_URI: %s", mgoURI)
 	}
-	sdb, err := db.DialStatusDB(mgoURI)
+	sdb, err := status.DialDB(mgoURI)
 	if err != nil {
 		log.Fatalf("Error connecting to StatusDB: %s", mgoURI)
 	}
@@ -38,7 +38,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
-func indoorTemp(key []byte, db *db.StatusDB) httprouter.Handle {
+func indoorTemp(key []byte, db *status.DB) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {

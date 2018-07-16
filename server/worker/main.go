@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/danielfireman/temp-to-go/server/db"
+	"github.com/danielfireman/temp-to-go/server/status"
 )
 
 func main() {
@@ -21,9 +21,9 @@ func main() {
 	if mgoURI == "" {
 		log.Fatalf("Invalid MONGODB_URI: %s", mgoURI)
 	}
-	sdb, err := db.DialStatusDB(mgoURI)
+	sdb, err := status.DialDB(mgoURI)
 	if err != nil {
-		log.Fatalf("Error connecting to ScheduledInfoDB: %s", mgoURI)
+		log.Fatalf("Error connecting to status DB: %s", mgoURI)
 	}
 	defer sdb.Close()
 	log.Println("Connected to StatusDB.")
@@ -41,7 +41,7 @@ func main() {
 		log.Fatalf("Error unmarshalling OMW response: %q", err)
 	}
 	log.Printf("Succefully feched response from OWM: %+v\n", omwResp)
-	ws := db.WeatherStatus{
+	ws := status.Weather{
 		Description: db.WeatherDescription{
 			Text: omwResp.Weather[0].Description,
 			Icon: omwResp.Weather[0].Icon,
@@ -55,7 +55,7 @@ func main() {
 		Rain:       round(omwResp.Rain.ThreeHours),
 		Cloudiness: round(omwResp.Clouds.All),
 	}
-	if err := sdb.StoreWeatherStatus(ws); err != nil {
+	if err := sdb.StoreWeather(ws); err != nil {
 		log.Fatalf("Error updating ScheduledInfoDB: %q", err)
 	}
 	log.Printf("Succefully updated ScheduledInfoDB: %+v\n", ws)

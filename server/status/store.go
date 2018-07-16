@@ -1,4 +1,4 @@
-package db
+package status
 
 import (
 	"fmt"
@@ -10,20 +10,20 @@ import (
 
 const statusDBCollectionName = "sdb"
 
-// StatusDB stores the result of the collection of information that happens at a pre-determined
+// DB stores the result of the collection of information that happens at a pre-determined
 // schedule. For instance, fetching the current weather information and the bedroom temperature.
-type StatusDB struct {
+type DB struct {
 	session    *mgo.Session
 	collection *mgo.Collection
 }
 
-// StoreWeatherStatus updates the StatusDB with the new information about the current weather.
-func (db *StatusDB) StoreWeatherStatus(ws WeatherStatus) error {
+// StoreWeather updates the StatusDB with the new information about the current weather.
+func (db *DB) StoreWeather(ws WeatherStatus) error {
 	return db.store(hourUTC(time.Now()), "weather", ws)
 }
 
 // StoreBedroomTemperature updates the StatusDB with the new bedroom temperature.
-func (db *StatusDB) StoreBedroomTemperature(temp float32) error {
+func (db *DB) StoreBedroomTemperature(temp float32) error {
 	now := hourUTC(time.Now())
 	var s status
 	if err := db.collection.Find(bson.M{"timestamp_hour": now}).One(&s); err != nil {
@@ -38,7 +38,7 @@ func hourUTC(t time.Time) time.Time {
 	return time.Date(tUTC.Year(), tUTC.Month(), tUTC.Day(), tUTC.Hour(), 0, 0, 0, tUTC.Location())
 }
 
-func (db *StatusDB) store(t time.Time, field string, val interface{}) error {
+func (db *DB) store(t time.Time, field string, val interface{}) error {
 	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
 	_, err := db.collection.Upsert(
 		bson.M{"timestamp_hour": t},
@@ -52,12 +52,12 @@ func (db *StatusDB) store(t time.Time, field string, val interface{}) error {
 
 // Close terminates the ScheduledInfoDB session. It's a runtime error to use a session
 // after it has been closed.
-func (db *StatusDB) Close() {
+func (db *DB) Close() {
 	db.session.Close()
 }
 
-// DialStatusDB sets up a connection to the database specified by the passed-in URI.
-func DialStatusDB(uri string) (*StatusDB, error) {
+// DialDB sets up a connection to the database specified by the passed-in URI.
+func DialDB(uri string) (*DB, error) {
 	info, err := mgo.ParseURL(uri)
 	if err != nil {
 		return nil, fmt.Errorf("invalid db URI:\"%s\" err:%q", uri, err)
@@ -67,7 +67,7 @@ func DialStatusDB(uri string) (*StatusDB, error) {
 		return nil, err
 	}
 	s.SetMode(mgo.Monotonic, true)
-	return &StatusDB{
+	return &DB{
 		session:    s,
 		collection: s.DB(info.Database).C(statusDBCollectionName),
 	}, nil
