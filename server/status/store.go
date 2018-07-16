@@ -12,9 +12,12 @@ import (
 const (
 	statusDBCollectionName = "sdb"
 	timestampIndexField    = "timestamp_hour"
-	bedroomField           = "bedroom"
-	weatherField           = "weather"
-	forecastField          = "forecast"
+)
+
+const (
+	bedroomField  = "bedroom"
+	weatherField  = "weather"
+	forecastField = "forecast"
 )
 
 // DB stores the result of the collection of information that happens at a pre-determined
@@ -29,7 +32,9 @@ func (db *DB) StoreWeather(ts time.Time, s weather.State) error {
 	return db.store(ts, weatherField, toStore(s))
 }
 
-// StoreWeatherForecast updates the StatusDB with the new information about the weather forecast.
+// StoreWeatherForecast updates the StatusDB with the new information about the weather forecast. This call
+// assumes the weather.State.Timestamp is a future timestamp, so it overrides whichever information is
+// associated to it (it should be none).
 func (db *DB) StoreWeatherForecast(states ...weather.State) error {
 	bulk := db.collection.Bulk()
 	for _, s := range states {
@@ -43,12 +48,12 @@ func (db *DB) StoreWeatherForecast(states ...weather.State) error {
 // StoreBedroomTemperature updates the StatusDB with the new bedroom temperature.
 func (db *DB) StoreBedroomTemperature(ts time.Time, temp float32) error {
 	now := ts.In(time.UTC)
-	var s status
-	if err := db.collection.Find(bson.M{timestampIndexField: now}).One(&s); err != nil {
+	var s bedroomState
+	if err := db.collection.Find(bson.M{timestampIndexField: now, "type": bedroomField}).One(&s); err != nil {
 		return err
 	}
-	s.Bedroom.Temp = temp
-	return db.store(now, bedroomField, s.Bedroom)
+	s.Temp = temp
+	return db.store(now, bedroomField, s)
 }
 
 func hourUTC(ts time.Time) time.Time {
@@ -57,13 +62,14 @@ func hourUTC(ts time.Time) time.Time {
 }
 
 func (db *DB) store(ts time.Time, field string, val interface{}) error {
-	utc := hourUTC(ts)
 	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
+	utc := hourUTC(ts)
 	_, err := db.collection.Upsert(
-		bson.M{timestampIndexField: utc},
+		bson.M{timestampIndexField: utc, "type": field},
 		bson.M{
 			timestampIndexField: utc,
-			field:               val,
+			"type":              field,
+			"value":             val,
 		},
 	)
 	return err
@@ -72,10 +78,11 @@ func (db *DB) store(ts time.Time, field string, val interface{}) error {
 func (db *DB) bulkStore(bulk *mgo.Bulk, ts time.Time, field string, val interface{}) {
 	utc := hourUTC(ts)
 	bulk.Upsert(
-		bson.M{timestampIndexField: utc},
+		bson.M{timestampIndexField: utc, "type": field},
 		bson.M{
 			timestampIndexField: utc,
-			field:               val,
+			"type":              field,
+			"value":             val,
 		},
 	)
 }
@@ -118,11 +125,6 @@ func toStore(s weather.State) weatherState {
 		Rain:       s.Rain,
 		Cloudiness: s.Cloudiness,
 	}
-}
-
-type status struct {
-	Bedroom bedroomState `bson:"bedroom,omitempty"`
-	Weather weatherState `bson:"weather,omitempty"`
 }
 
 // weatherState stores the complete information about the weather at a certain time.
