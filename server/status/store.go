@@ -4,11 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/danielfireman/temp-to-go/server/weather"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-const statusDBCollectionName = "sdb"
+const (
+	statusDBCollectionName = "sdb"
+	timestampIndexField    = "timestamp_hour"
+	bedroomField           = "bedroom"
+	weatherField           = "weather"
+)
 
 // DB stores the result of the collection of information that happens at a pre-determined
 // schedule. For instance, fetching the current weather information and the bedroom temperature.
@@ -18,33 +24,33 @@ type DB struct {
 }
 
 // StoreWeather updates the StatusDB with the new information about the current weather.
-func (db *DB) StoreWeather(ws WeatherStatus) error {
-	return db.store(hourUTC(time.Now()), "weather", ws)
+func (db *DB) StoreWeather(s weather.State) error {
+	return db.store(hourUTC(s.Timestamp), weatherField, toStore(s))
 }
 
 // StoreBedroomTemperature updates the StatusDB with the new bedroom temperature.
-func (db *DB) StoreBedroomTemperature(temp float32) error {
-	now := hourUTC(time.Now())
+func (db *DB) StoreBedroomTemperature(ts int64, temp float32) error {
+	now := hourUTC(ts)
 	var s status
-	if err := db.collection.Find(bson.M{"timestamp_hour": now}).One(&s); err != nil {
+	if err := db.collection.Find(bson.M{timestampIndexField: now}).One(&s); err != nil {
 		return err
 	}
 	s.Bedroom.Temp = temp
-	return db.store(now, "bedroom", s.Bedroom)
+	return db.store(now, bedroomField, s.Bedroom)
 }
 
-func hourUTC(t time.Time) time.Time {
-	tUTC := t.In(time.UTC)
+func hourUTC(ts int64) time.Time {
+	tUTC := time.Unix(int64(ts), 0)
 	return time.Date(tUTC.Year(), tUTC.Month(), tUTC.Day(), tUTC.Hour(), 0, 0, 0, tUTC.Location())
 }
 
 func (db *DB) store(t time.Time, field string, val interface{}) error {
 	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
 	_, err := db.collection.Upsert(
-		bson.M{"timestamp_hour": t},
+		bson.M{timestampIndexField: t},
 		bson.M{
-			"timestamp_hour": t,
-			field:            val,
+			timestampIndexField: t,
+			field:               val,
 		},
 	)
 	return err
@@ -73,35 +79,50 @@ func DialDB(uri string) (*DB, error) {
 	}, nil
 }
 
-// Wind stores information about the wind.
-type Wind struct {
-	Speed     float32 `bson:"speed,omitempty"` // Wind speed, meter/sec
-	Direction float32 `bson:"deg,omitempty"`   // Wind direction, degrees (meteorological)
+func toStore(s weather.State) weatherState {
+	return weatherState{
+		Description: weatherDescription{
+			Text: s.Description.Text,
+			Icon: s.Description.Icon,
+		},
+		Wind: wind{
+			Speed:     s.Wind.Speed,
+			Direction: s.Wind.Direction,
+		},
+		Temp:       s.Temp,
+		Humidity:   s.Humidity,
+		Rain:       s.Rain,
+		Cloudiness: s.Cloudiness,
+	}
 }
 
-// WeatherDescription stores overall information to describe the weather. That include text, images and so on.
-type WeatherDescription struct {
-	Text string `bson:"text,omitempty"` // Weather condition within the group
-	Icon string `bson:"icon,omitempty"` // Weather icon id
+type status struct {
+	Bedroom bedroomState `bson:"bedroom,omitempty"`
+	Weather weatherState `bson:"weather,omitempty"`
 }
 
-// WeatherStatus stores the complete information about the weather at a certain time.
-type WeatherStatus struct {
-	Description WeatherDescription `bson:"description,omitempty"`
-	Wind        Wind               `bson:"wind,omitempty"`
+// weatherState stores the complete information about the weather at a certain time.
+type weatherState struct {
+	Description weatherDescription `bson:"description,omitempty"`
+	Wind        wind               `bson:"wind,omitempty"`
 	Temp        float32            `bson:"temp,omitempty"`       // Temperature, Celsius
 	Humidity    float32            `bson:"humidity,omitempty"`   // Humidity, %
 	Rain        float32            `bson:"rain,omitempty"`       // Rain volume for the last hours
 	Cloudiness  float32            `bson:"cloudiness,omitempty"` // Cloudiness, %
 }
 
-// BedroomStatus stores information about the bedroom.
-type BedroomStatus struct {
+// Bedroom stores information about the bedroom.
+type bedroomState struct {
 	Temp float32 `bson:"temp,omitempty"` // Temperature, Celsius
 	Fan  byte    `bson:"fan,omitempty"`  // On, Off (1, 0)
 }
 
-type status struct {
-	Bedroom BedroomStatus `bson:"bedroom,omitempty"`
-	Weather WeatherStatus `bson:"weather,omitempty"`
+type wind struct {
+	Speed     float32 `bson:"speed,omitempty"` // Wind speed, meter/sec
+	Direction float32 `bson:"deg,omitempty"`   // Wind direction, degrees (meteorological)
+}
+
+type weatherDescription struct {
+	Text string `bson:"text,omitempty"` // Weather condition within the group
+	Icon string `bson:"icon,omitempty"` // Weather icon id
 }
