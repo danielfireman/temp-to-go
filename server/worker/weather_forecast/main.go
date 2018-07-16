@@ -30,7 +30,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error retrieving weather forecast weather: %q", err)
 	}
-	if err := sdb.StoreWeather(ws...); err != nil {
+	if err := sdb.StoreWeatherForecast(ws...); err != nil {
 		log.Fatalf("Error updating status with weather forecast: %q", err)
 	}
 	log.Printf("Succefully updated status with weather forecast: %+v\n", ws)

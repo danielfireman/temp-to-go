@@ -14,6 +14,7 @@ const (
 	timestampIndexField    = "timestamp_hour"
 	bedroomField           = "bedroom"
 	weatherField           = "weather"
+	forecastField          = "forecast"
 )
 
 // DB stores the result of the collection of information that happens at a pre-determined
@@ -24,11 +25,16 @@ type DB struct {
 }
 
 // StoreWeather updates the StatusDB with the new information about the current weather.
-func (db *DB) StoreWeather(states ...weather.State) error {
+func (db *DB) StoreWeather(ts time.Time, s weather.State) error {
+	return db.store(ts, weatherField, toStore(s))
+}
+
+// StoreWeatherForecast updates the StatusDB with the new information about the weather forecast.
+func (db *DB) StoreWeatherForecast(states ...weather.State) error {
 	bulk := db.collection.Bulk()
 	for _, s := range states {
 		ts := time.Unix(s.Timestamp, 0)
-		db.bulkStore(bulk, ts, weatherField, toStore(s))
+		db.bulkStore(bulk, ts, forecastField, toStore(s))
 	}
 	_, err := bulk.Run()
 	return err
@@ -64,7 +70,6 @@ func (db *DB) store(ts time.Time, field string, val interface{}) error {
 }
 
 func (db *DB) bulkStore(bulk *mgo.Bulk, ts time.Time, field string, val interface{}) {
-	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
 	utc := hourUTC(ts)
 	bulk.Upsert(
 		bson.M{timestampIndexField: utc},
