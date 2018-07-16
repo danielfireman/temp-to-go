@@ -24,13 +24,19 @@ type DB struct {
 }
 
 // StoreWeather updates the StatusDB with the new information about the current weather.
-func (db *DB) StoreWeather(s weather.State) error {
-	return db.store(hourUTC(s.Timestamp), weatherField, toStore(s))
+func (db *DB) StoreWeather(states ...weather.State) error {
+	bulk := db.collection.Bulk()
+	for _, s := range states {
+		ts := time.Unix(s.Timestamp, 0)
+		db.bulkStore(bulk, ts, weatherField, toStore(s))
+	}
+	_, err := bulk.Run()
+	return err
 }
 
 // StoreBedroomTemperature updates the StatusDB with the new bedroom temperature.
-func (db *DB) StoreBedroomTemperature(ts int64, temp float32) error {
-	now := hourUTC(ts)
+func (db *DB) StoreBedroomTemperature(ts time.Time, temp float32) error {
+	now := ts.In(time.UTC)
 	var s status
 	if err := db.collection.Find(bson.M{timestampIndexField: now}).One(&s); err != nil {
 		return err
@@ -39,21 +45,34 @@ func (db *DB) StoreBedroomTemperature(ts int64, temp float32) error {
 	return db.store(now, bedroomField, s.Bedroom)
 }
 
-func hourUTC(ts int64) time.Time {
-	tUTC := time.Unix(int64(ts), 0)
+func hourUTC(ts time.Time) time.Time {
+	tUTC := ts.In(time.UTC)
 	return time.Date(tUTC.Year(), tUTC.Month(), tUTC.Day(), tUTC.Hour(), 0, 0, 0, tUTC.Location())
 }
 
-func (db *DB) store(t time.Time, field string, val interface{}) error {
+func (db *DB) store(ts time.Time, field string, val interface{}) error {
+	utc := hourUTC(ts)
 	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
 	_, err := db.collection.Upsert(
-		bson.M{timestampIndexField: t},
+		bson.M{timestampIndexField: utc},
 		bson.M{
-			timestampIndexField: t,
+			timestampIndexField: utc,
 			field:               val,
 		},
 	)
 	return err
+}
+
+func (db *DB) bulkStore(bulk *mgo.Bulk, ts time.Time, field string, val interface{}) {
+	// Inspiration: https://www.mongodb.com/blog/post/schema-design-for-time-series-data-in-mongodb
+	utc := hourUTC(ts)
+	bulk.Upsert(
+		bson.M{timestampIndexField: utc},
+		bson.M{
+			timestampIndexField: utc,
+			field:               val,
+		},
+	)
 }
 
 // Close terminates the ScheduledInfoDB session. It's a runtime error to use a session

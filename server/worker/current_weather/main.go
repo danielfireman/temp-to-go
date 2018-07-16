@@ -24,14 +24,14 @@ func main() {
 		log.Fatalf("Error connecting to status DB: %s", mgoURI)
 	}
 	defer sdb.Close()
-
 	log.Println("Connected to StatusDB.")
+
 	ws, err := weatherClient.Current()
 	if err != nil {
 		log.Fatalf("Error retrieving current weather: %q", err)
 	}
 	if err := sdb.StoreWeather(ws); err != nil {
-		log.Fatalf("Error updating ScheduledInfoDB: %q", err)
+		log.Fatalf("Error updating status with current weather: %q", err)
 	}
-	log.Printf("Succefully updated ScheduledInfoDB: %+v\n", ws)
+	log.Printf("Succefully updated status with current weather: %+v\n", ws)
 }

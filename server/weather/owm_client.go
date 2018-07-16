@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	owmForecastCall    = "forecast"
-	owmCurrWeatherCall = "weather"
-	owmFmtURL          = "http://api.openweathermap.org/data/2.5/%s?units=metric&q=Maceio,BR&appid=%s"
+	owmForecastURLFmt     = "http://api.openweathermap.org/data/2.5/forecast?units=metric&q=Maceio,BR&cnt=%d&appid=%s"
+	owmWeatherURLFmt      = "http://api.openweathermap.org/data/2.5/weather?units=metric&q=Maceio,BR&appid=%s"
+	maxOwmForecastEntries = 8 // Limitting the amount of forecast time to 24 hours.
 )
 
 // Client is used to communcate with a service and fetch current and future information about the weather.
@@ -40,7 +40,7 @@ func NewOWMClient(key string) *Client {
 
 // Current fetches and returns the current weather state from open weather maps.
 func (c Client) Current() (State, error) {
-	resp, err := c.c.Get(fmt.Sprintf(owmFmtURL, owmCurrWeatherCall, c.key))
+	resp, err := c.c.Get(fmt.Sprintf(owmWeatherURLFmt, c.key))
 	if err != nil {
 		return State{}, fmt.Errorf("Error fetching current weather from OWM: %q", err)
 	}
@@ -59,7 +59,7 @@ func (c Client) Current() (State, error) {
 // Forecast fetches and returns the weather forecast. As the forecast grain (e.g., each 3 hours for the next day) can
 // vary and callers need to inspect each of the State's timestamp to identify it.
 func (c Client) Forecast() ([]State, error) {
-	resp, err := c.c.Get(fmt.Sprintf(owmFmtURL, owmCurrWeatherCall, c.key))
+	resp, err := c.c.Get(fmt.Sprintf(owmForecastURLFmt, maxOwmForecastEntries, c.key))
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching current weather from OWM: %q", err)
 	}
