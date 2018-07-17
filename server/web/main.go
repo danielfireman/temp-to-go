@@ -4,23 +4,24 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/status"
-	"github.com/julienschmidt/httprouter"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"golang.org/x/crypto/acme/autocert"
 )
 
+// Defines the environment.
+var env = os.Getenv("ENV")
+
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatalf("Invalid PORT: %s", port)
-	}
 	key := []byte(os.Getenv("ENCRYPTION_KEY"))
 	if len(key) != 32 {
 		log.Fatalf("ENCRYPTION_KEY must be 32-bytes long. Current key is \"%s\" which is %d bytes long.", key, len(key))
@@ -34,35 +35,76 @@ func main() {
 		log.Fatalf("Error connecting to StatusDB: %s", mgoURI)
 	}
 	defer sdb.Close()
-	router := httprouter.New()
-	router.POST("/indoortemp", indoorTemp(key, sdb))
-	log.Fatal(http.ListenAndServe(":"+port, router))
+
+	e := echo.New()
+
+	env := os.Getenv("ENV")
+	if env == "PROD" {
+		// Configuring TLS.
+		log.Println(strings.Split(os.Getenv("TLS_HOST_WHITELIST"), ","))
+		e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(strings.Split(os.Getenv("TLS_HOST_WHITELIST"), ",")...)
+		tlsCachePath, err := ioutil.TempDir("", ".tlscache")
+		if err != nil {
+			log.Fatalf("Could not create TLS temporary cache directory: %q", err)
+		}
+		e.AutoTLSManager.Cache = autocert.DirCache(tlsCachePath)
+	}
+
+	// Middlewares.
+	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
+
+	// Paths.
+	e.GET("/", func(c echo.Context) error {
+		return c.HTML(http.StatusOK, `
+			<h1>Welcome to MyBedroom!</h1>
+			<h3>TLS certificates automatically installed from Let's Encrypt :)</h3>
+		`)
+	})
+	e.POST("/indoortemp", indoorTemp(key, sdb))
+
+	if isProdEnv() {
+		e.Logger.Fatal(e.StartAutoTLS(":443"))
+	} else {
+		port := os.Getenv("PORT")
+		if port == "" {
+			log.Fatalf("Invalid PORT: %s", port)
+		}
+		s := &http.Server{
+			Addr:         ":" + port,
+			ReadTimeout:  5 * time.Minute,
+			WriteTimeout: 5 * time.Minute,
+		}
+		e.Logger.Fatal(e.StartServer(s))
+	}
 }
 
-func indoorTemp(key []byte, db *status.DB) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Error reading request body: %q", err), http.StatusInternalServerError)
-			return
+func isProdEnv() bool {
+	return env == "PROD"
+}
+
+func indoorTemp(key []byte, db *status.DB) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var body []byte
+		if err := c.Bind(&body); err != nil {
+			c.Logger().Errorf("Error reading request body: %q", err)
+			return c.NoContent(http.StatusInternalServerError)
 		}
-		defer r.Body.Close()
 		d, err := decrypt(body, key)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Error decrypting request body: %q", err), http.StatusForbidden)
-			return
+			c.Logger().Errorf("Error decrypting request body: %q", err)
+			return c.NoContent(http.StatusForbidden)
 		}
 		temp, err := strconv.ParseFloat(string(d), 32)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Error request body: %q", err), http.StatusBadRequest)
-			return
+			c.Logger().Errorf("Error request body: %q", err)
+			return c.NoContent(http.StatusBadRequest)
 		}
 		if err := db.StoreBedroomTemperature(time.Now(), float32(temp)); err != nil {
-			log.Printf("[Error] StoreBedroomTemperature: %q\n", err)
-			http.Error(w, "Error processing request.", http.StatusInternalServerError)
-			return
+			c.Logger().Errorf("StoreBedroomTemperature: %q\n", err)
+			return c.NoContent(http.StatusInternalServerError)
 		}
-		fmt.Println("Temperature stored successfully.")
+		return nil
 	}
 }
 
