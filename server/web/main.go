@@ -37,10 +37,7 @@ func main() {
 
 	// Routes.
 	e.GET("/", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, `
-			<h1>Welcome to MyBedroom!</h1>
-			<h3>TLS certificates automatically installed from Let's Encrypt :)</h3>
-		`)
+		return c.HTML(http.StatusOK, `<h1>Welcome to MyBedroom!</h1>`)
 	})
 	e.POST("/indoortemp", indoorTemp(key, sdb))
 
