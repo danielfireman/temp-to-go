@@ -63,13 +63,13 @@ func main() {
 	})
 	e.POST("/indoortemp", indoorTemp(key, sdb))
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatalf("Invalid PORT: %s", port)
+	}
 	if isProdEnv() {
-		e.Logger.Fatal(e.StartAutoTLS(":443"))
+		e.Logger.Fatal(e.StartAutoTLS(":" + port))
 	} else {
-		port := os.Getenv("PORT")
-		if port == "" {
-			log.Fatalf("Invalid PORT: %s", port)
-		}
 		s := &http.Server{
 			Addr:         ":" + port,
 			ReadTimeout:  5 * time.Minute,
