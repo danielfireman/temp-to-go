@@ -4,22 +4,16 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"errors"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/status"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"golang.org/x/crypto/acme/autocert"
 )
-
-// Defines the environment.
-var env = os.Getenv("ENV")
 
 func main() {
 	key := []byte(os.Getenv("ENCRYPTION_KEY"))
@@ -36,25 +30,12 @@ func main() {
 	}
 	defer sdb.Close()
 
-	e := echo.New()
-
-	env := os.Getenv("ENV")
-	if env == "PROD" {
-		// Configuring TLS.
-		log.Println(strings.Split(os.Getenv("TLS_HOST_WHITELIST"), ","))
-		e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(strings.Split(os.Getenv("TLS_HOST_WHITELIST"), ",")...)
-		tlsCachePath, err := ioutil.TempDir("", ".tlscache")
-		if err != nil {
-			log.Fatalf("Could not create TLS temporary cache directory: %q", err)
-		}
-		e.AutoTLSManager.Cache = autocert.DirCache(tlsCachePath)
-	}
-
 	// Middlewares.
+	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 
-	// Paths.
+	// Routes.
 	e.GET("/", func(c echo.Context) error {
 		return c.HTML(http.StatusOK, `
 			<h1>Welcome to MyBedroom!</h1>
@@ -63,24 +44,17 @@ func main() {
 	})
 	e.POST("/indoortemp", indoorTemp(key, sdb))
 
+	// Starting server.
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatalf("Invalid PORT: %s", port)
 	}
-	if isProdEnv() {
-		e.Logger.Fatal(e.StartAutoTLS(":" + port))
-	} else {
-		s := &http.Server{
-			Addr:         ":" + port,
-			ReadTimeout:  5 * time.Minute,
-			WriteTimeout: 5 * time.Minute,
-		}
-		e.Logger.Fatal(e.StartServer(s))
+	s := &http.Server{
+		Addr:         ":" + port,
+		ReadTimeout:  5 * time.Minute,
+		WriteTimeout: 5 * time.Minute,
 	}
-}
-
-func isProdEnv() bool {
-	return env == "PROD"
+	e.Logger.Fatal(e.StartServer(s))
 }
 
 func indoorTemp(key []byte, db *status.DB) echo.HandlerFunc {
