@@ -12,15 +12,14 @@ Besides solve this very important problem, our small projects has some other goa
 # Status
 
 * Device: Done :grin:
-* HTTP API (bedroom temperature): Done :grin:
-* Fetch Current Weather Worker: Started :smirk:
-* Fetch Weather Forecast and Prediction Worker: Not started :unamused:
-* Fan control HTTP FE: Not Started :unamused:
-* Public HTTP FE: Not started :unamused:
-
-# Design
-
-> TODO
+* HTTP API (bedroom temperature): Done 
+* Fetch Current Weather Worker: Done :grin:
+* Fetch Weather Forecast and Prediction Worker: Done :grin:
+* Public HTTP FE: Done :grin:
+* Prediction: Not Started :unamused:
+* Authorzed area: Not Started :unamused:
+* Fan control HTTP FE (authorized area): Not Started :unamused:
+* Prediction graphs: Not Started :unamused:
 
 # Stack
 
@@ -40,7 +39,7 @@ Besides solve this very important problem, our small projects has some other goa
      * Software
           * [mgo](https://labix.org/mgo)
           * [Gonum](https://github.com/gonum/gonum), in particular the [Linear Regression](https://godoc.org/gonum.org/v1/gonum/stat#LinearRegression)
-          
+          * [Labstack Echo](https://echo.labstack.com/)
 
 * Client
      * [GopherJS](https://github.com/gopherjs/gopherjs)
