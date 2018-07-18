@@ -1,21 +1,26 @@
 package main
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"errors"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/status"
+	"github.com/danielfireman/temp-to-go/server/web/bedroomapi"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
 )
 
+const restrictedPath = "/restricted"
+
 func main() {
+	userPasswd := os.Getenv("USERPASSWD")
+	if userPasswd == "" {
+		log.Fatal("USERPASSWD must be set.")
+	}
 	key := []byte(os.Getenv("ENCRYPTION_KEY"))
 	if len(key) != 32 {
 		log.Fatalf("ENCRYPTION_KEY must be 32-bytes long. Current key is \"%s\" which is %d bytes long.", key, len(key))
@@ -34,11 +39,18 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
+	e.Use(session.Middleware(sessions.NewCookieStore(key)))
 
-	// Routes.
-	e.Static("/public", "public")
+	// Public Routes.
 	e.File("/", "public/index.html")
-	e.POST("/indoortemp", indoorTemp(key, sdb))
+	e.Static("/public", "public")
+	e.POST("/indoortemp", bedroomapi.TempHandlerFunc(key, sdb))
+	e.POST("/login", loginHandlerFunc(userPasswd))
+
+	// Routes which should only be accessed after login.
+	restricted := e.Group(restrictedPath, restrictedMiddleware)
+	restricted.GET("", mainPage)
+	restricted.POST("/logout", logoutHandler)
 
 	// Starting server.
 	port := os.Getenv("PORT")
@@ -53,44 +65,68 @@ func main() {
 	e.Logger.Fatal(e.StartServer(s))
 }
 
-func indoorTemp(key []byte, db *status.DB) echo.HandlerFunc {
+func mainPage(c echo.Context) error {
+	return c.File("public/main.html")
+}
+
+const (
+	loggedInSessionField = "loggedin"
+	sessionName          = "session"
+)
+
+func logoutHandler(c echo.Context) error {
+	sess, err := session.Get(sessionName, c)
+	if err != nil {
+		c.Logger().Errorf("Err getting session: %q\n", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	sess.Options = &sessions.Options{
+		Path:   "/",
+		MaxAge: -1, // MaxAge<0 means delete cookie immediately.
+	}
+	delete(sess.Values, loggedInSessionField)
+	sess.Save(c.Request(), c.Response())
+	return c.Redirect(http.StatusFound, "/")
+}
+
+func loginHandlerFunc(userPasswd string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var body []byte
-		if err := c.Bind(&body); err != nil {
-			c.Logger().Errorf("Error reading request body: %q", err)
-			return c.NoContent(http.StatusInternalServerError)
+		user := c.FormValue("user")
+		passwd := c.FormValue("password")
+		if user+passwd == userPasswd {
+			sess, _ := session.Get(sessionName, c)
+			sess.Options = &sessions.Options{
+				Path:     "/",
+				MaxAge:   86400 * 7,
+				HttpOnly: true,
+			}
+			sess.Values[loggedInSessionField] = true
+			sess.Save(c.Request(), c.Response())
+			return c.Redirect(http.StatusFound, restrictedPath)
 		}
-		d, err := decrypt(body, key)
-		if err != nil {
-			c.Logger().Errorf("Error decrypting request body: %q", err)
-			return c.NoContent(http.StatusForbidden)
-		}
-		temp, err := strconv.ParseFloat(string(d), 32)
-		if err != nil {
-			c.Logger().Errorf("Error request body: %q", err)
-			return c.NoContent(http.StatusBadRequest)
-		}
-		if err := db.StoreBedroomTemperature(time.Now(), float32(temp)); err != nil {
-			c.Logger().Errorf("StoreBedroomTemperature: %q\n", err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-		return nil
+		return c.NoContent(http.StatusForbidden)
 	}
 }
 
-func decrypt(ciphertext []byte, key []byte) ([]byte, error) {
-	c, err := aes.NewCipher(key)
+func isLoggedIn(c echo.Context) (bool, error) {
+	sess, err := session.Get(sessionName, c)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-	gcm, err := cipher.NewGCM(c)
-	if err != nil {
-		return nil, err
+	_, ok := sess.Values[loggedInSessionField]
+	return ok, nil
+}
+
+func restrictedMiddleware(in echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		isLoggedIn, err := isLoggedIn(c)
+		if err != nil {
+			c.Logger().Errorf("Err checking login: %q\n", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
+		if isLoggedIn {
+			return in(c)
+		}
+		return c.NoContent(http.StatusForbidden)
 	}
-	nonceSize := gcm.NonceSize()
-	if len(ciphertext) < nonceSize {
-		return nil, errors.New("ciphertext too short")
-	}
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	return gcm.Open(nil, nonce, ciphertext, nil)
 }

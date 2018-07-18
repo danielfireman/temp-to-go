@@ -16,8 +16,8 @@ Besides solve this very important problem, our small projects has some other goa
 * Fetch Current Weather Worker: Done :grin:
 * Fetch Weather Forecast and Prediction Worker: Done :grin:
 * Public HTTP FE: Done :grin:
+* Authorzed area: Not Started Done :grin:
 * Prediction: Not Started :unamused:
-* Authorzed area: Not Started :unamused:
 * Fan control HTTP FE (authorized area): Not Started :unamused:
 * Prediction graphs: Not Started :unamused:
 
@@ -40,6 +40,8 @@ Besides solve this very important problem, our small projects has some other goa
           * [mgo](https://labix.org/mgo)
           * [Gonum](https://github.com/gonum/gonum), in particular the [Linear Regression](https://godoc.org/gonum.org/v1/gonum/stat#LinearRegression)
           * [Labstack Echo](https://echo.labstack.com/)
+          * [Labstack Echo-Contrib/session](https://github.com/labstack/echo-contrib)
+          * [Gorilla Sessions](https://github.com/gorilla/sessions)
 
 * Client
      * [GopherJS](https://github.com/gopherjs/gopherjs)
