@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/status"
@@ -42,8 +43,9 @@ func main() {
 	e.Use(session.Middleware(sessions.NewCookieStore(key)))
 
 	// Public Routes.
-	e.File("/", "public/index.html")
-	e.Static("/public", "public")
+	publicHTML := filepath.Join(os.Getenv("PUBLIC_HTML"))
+	e.File("/", filepath.Join(publicHTML, "index.html"))
+	e.Static("/public", publicHTML)
 	e.POST("/indoortemp", bedroomapi.TempHandlerFunc(key, sdb))
 	e.POST("/login", loginHandlerFunc(userPasswd))
 
