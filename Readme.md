@@ -11,8 +11,8 @@ Besides solve this very important problem, our small projects has some other goa
 
 # Status
 
-* Device: Done :grin:
-* HTTP API (bedroom temperature): Done 
+* Device configuration and software: Done :grin:
+* HTTP API for storing bedroom temperature (crypto): Done :grin:
 * Fetch Current Weather Worker: Done :grin:
 * Fetch Weather Forecast and Prediction Worker: Done :grin:
 * Public HTTP FE: Done :grin:
