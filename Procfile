@@ -1,2 +1,1 @@
-web: web
-worker: worker
+web: server/web
