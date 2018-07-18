@@ -36,9 +36,8 @@ func main() {
 	e.Use(middleware.Logger())
 
 	// Routes.
-	e.GET("/", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, `<h1>Welcome to MyBedroom!</h1>`)
-	})
+	e.Static("/public", "public")
+	e.File("/", "public/index.html")
 	e.POST("/indoortemp", indoorTemp(key, sdb))
 
 	// Starting server.
