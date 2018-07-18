@@ -68,7 +68,7 @@ func main() {
 }
 
 func mainPage(c echo.Context) error {
-	return c.File("public/main.html")
+	return c.Redirect(http.StatusFound, "/public/main.html")
 }
 
 const (
