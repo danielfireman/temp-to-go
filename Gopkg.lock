@@ -8,6 +8,12 @@
   version = "v3.2.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/globalsign/mgo"
+  packages = [".","bson","internal/json","internal/sasl","internal/scram"]
+  revision = "113d3961e7311526535a1ef7042196563d442761"
+
+[[projects]]
   name = "github.com/gorilla/context"
   packages = ["."]
   revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
@@ -79,15 +85,9 @@
   packages = ["unix"]
   revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
 
-[[projects]]
-  branch = "v2"
-  name = "gopkg.in/mgo.v2"
-  packages = [".","bson","internal/json","internal/sasl","internal/scram"]
-  revision = "3f83fa5005286a7fe593b055f0d7771a7dce4655"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "543db84534a0640ed7486de114f019ca0157291b53212188121e83da701064a1"
+  inputs-digest = "cff00a091a0344ff322aa059a78c7dbbb6d391cbd0cdc236b6295474a36b6e72"
   solver-name = "gps-cdcl"
   solver-version = 1
