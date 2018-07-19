@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/danielfireman/temp-to-go/server/status"
@@ -16,7 +15,6 @@ func mainRestrictedHandlerFunc(fan *status.Fan) echo.HandlerFunc {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		fmt.Println("BOOOOO", s)
 		// Converting the FanSpeed to text.
 		currSpeed := "Off"
 		switch s {
