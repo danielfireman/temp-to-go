@@ -123,18 +123,14 @@ func loginHandlerFunc(userPasswd string) echo.HandlerFunc {
 	}
 }
 
-func isLoggedIn(c echo.Context) (bool, error) {
-	sess, err := session.Get(sessionName, c)
-	if err != nil {
-		return false, err
-	}
-	_, ok := sess.Values[loggedInSessionField]
-	return ok, nil
-}
-
 func restrictedMiddleware(in echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		isLoggedIn, err := isLoggedIn(c)
+		sess, err := session.Get(sessionName, c)
+		if err != nil {
+			c.Logger().Errorf("Err getting session (%s): %q\n", sessionName, err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
+		_, isLoggedIn := sess.Values[loggedInSessionField]
 		if err != nil {
 			c.Logger().Errorf("Err checking login: %q\n", err)
 			return c.NoContent(http.StatusInternalServerError)
