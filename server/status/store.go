@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/weather"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 const (

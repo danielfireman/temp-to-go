@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 // Fan allows the user to update and get information about the bedroom fan.
@@ -29,13 +29,13 @@ func (f Fan) UpdateStatus(s FanStatus) error {
 		}
 		return nil
 	}
-	return f.db.store(time.Now(), fanField, fanState{Value: s})
+	return f.db.store(time.Now(), fanField, s)
 }
 
 // Status returns the fan status at the current moment.
 func (f Fan) Status() (FanStatus, error) {
 	utc := hourUTC(time.Now())
-	var d fanState
+	var d fanDocument
 	err := f.db.collection.Find(bson.M{timestampIndexField: utc, "type": fanField}).One(&d)
 	switch err {
 	case mgo.ErrNotFound:
@@ -56,6 +56,7 @@ const (
 	FanHighSpeed FanStatus = 2
 )
 
-type fanState struct {
+// Represents the actual document stored in the database. For now, we only care about the value field.
+type fanDocument struct {
 	Value FanStatus `bson:"value,omitempty"`
 }
