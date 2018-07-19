@@ -45,6 +45,7 @@ func main() {
 	// Public Routes.
 	publicHTML := filepath.Join(os.Getenv("PUBLIC_HTML"))
 	e.File("/", filepath.Join(publicHTML, "index.html"))
+	e.File("/favicon.ico", filepath.Join(publicHTML, "favicon.ico"))
 	e.Static("/public", publicHTML)
 	e.POST("/indoortemp", bedroomapi.TempHandlerFunc(key, sdb))
 	e.POST("/login", loginHandlerFunc(userPasswd))
