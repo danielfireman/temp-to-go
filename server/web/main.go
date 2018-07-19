@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
+
+	htmlTemplate "html/template"
 )
 
 const restrictedPath = "/restricted"
@@ -36,14 +39,23 @@ func main() {
 	}
 	defer sdb.Close()
 
-	// Middlewares.
+	publicHTML := filepath.Join(os.Getenv("PUBLIC_HTML"))
+
+	// Initializing web framework.
 	e := echo.New()
+
+	// Registering templates.
+	// https://echo.labstack.com/guide/templates
+	e.Renderer = &template{
+		templates: htmlTemplate.Must(htmlTemplate.ParseGlob(filepath.Join(publicHTML, "templates", "*.html"))),
+	}
+
+	// Middlewares.
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(sessions.NewCookieStore(key)))
 
 	// Public Routes.
-	publicHTML := filepath.Join(os.Getenv("PUBLIC_HTML"))
 	e.File("/", filepath.Join(publicHTML, "index.html"))
 	e.File("/favicon.ico", filepath.Join(publicHTML, "favicon.ico"))
 	e.Static("/public", publicHTML)
@@ -69,7 +81,7 @@ func main() {
 }
 
 func mainPage(c echo.Context) error {
-	return c.Redirect(http.StatusFound, "/public/main.html")
+	return c.Render(http.StatusOK, "main", nil)
 }
 
 const (
@@ -132,4 +144,12 @@ func restrictedMiddleware(in echo.HandlerFunc) echo.HandlerFunc {
 		}
 		return c.NoContent(http.StatusForbidden)
 	}
+}
+
+type template struct {
+	templates *htmlTemplate.Template
+}
+
+func (t *template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
 }

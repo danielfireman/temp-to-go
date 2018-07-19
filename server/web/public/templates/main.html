@@ -1,7 +1,12 @@
+{{define "main"}}
 <html>
 
 <body>
     <h1>Welcome!</h1>
+    <hr>
+    <form method="post" action="/restricted/fan">
+        <button type="submit">On</button>
+    </form>
     <hr>
     <form method="post" action="/restricted/logout">
         <button type="submit">Logout</button>
@@ -9,3 +14,4 @@
 </body>
 
 </html>
+{{end}}
