@@ -18,7 +18,11 @@ import (
 	htmlTemplate "html/template"
 )
 
-const restrictedPath = "/restricted"
+const (
+	restrictedPath     = "/restricted"
+	fanPath            = "/restricted/fan"
+	fanStatusFieldName = "fanStatus"
+)
 
 func main() {
 	userPasswd := os.Getenv("USERPASSWD")
@@ -40,6 +44,7 @@ func main() {
 	defer sdb.Close()
 
 	publicHTML := filepath.Join(os.Getenv("PUBLIC_HTML"))
+	fan := sdb.Fan()
 
 	// Initializing web framework.
 	e := echo.New()
@@ -64,7 +69,8 @@ func main() {
 
 	// Routes which should only be accessed after login.
 	restricted := e.Group(restrictedPath, restrictedMiddleware)
-	restricted.GET("", mainPage)
+	restricted.GET("", mainRestrictedHandlerFunc(fan))
+	restricted.POST("/fan", fanHandlerFunc(fan))
 	restricted.POST("/logout", logoutHandler)
 
 	// Starting server.
@@ -78,10 +84,6 @@ func main() {
 		WriteTimeout: 5 * time.Minute,
 	}
 	e.Logger.Fatal(e.StartServer(s))
-}
-
-func mainPage(c echo.Context) error {
-	return c.Render(http.StatusOK, "main", nil)
 }
 
 const (

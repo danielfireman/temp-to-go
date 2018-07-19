@@ -4,10 +4,16 @@
 <body>
     <h1>Welcome!</h1>
     <hr>
-    <form method="post" action="/restricted/fan">
-        <button type="submit">On</button>
+    Current Fan Status: <b>{{.Speed}}</b>    
+    <form method="post" action={{.Action}}>
+        Update Status:
+        {{range .Opts}}
+            <input type="radio" name={{.Name}} value={{.Value}} checked>{{.Label}}
+        {{end}}
+        <button type="submit">Submit</button>
     </form>
     <hr>
+    <br>
     <form method="post" action="/restricted/logout">
         <button type="submit">Logout</button>
     </form>

@@ -18,6 +18,7 @@ const (
 	bedroomField  = "bedroom"
 	weatherField  = "weather"
 	forecastField = "forecast"
+	fanField      = "fan"
 )
 
 // DB stores the result of the collection of information that happens at a pre-determined
@@ -47,13 +48,12 @@ func (db *DB) StoreWeatherForecast(states ...weather.State) error {
 
 // StoreBedroomTemperature updates the StatusDB with the new bedroom temperature.
 func (db *DB) StoreBedroomTemperature(ts time.Time, temp float32) error {
-	now := ts.In(time.UTC)
-	var s bedroomState
-	if err := db.collection.Find(bson.M{timestampIndexField: now, "type": bedroomField}).One(&s); err != nil {
-		return err
-	}
-	s.Temp = temp
-	return db.store(now, bedroomField, s)
+	return db.store(time.Now(), bedroomField, temp)
+}
+
+// Fan returns a Fan instance.
+func (db *DB) Fan() *Fan {
+	return &Fan{db}
 }
 
 func hourUTC(ts time.Time) time.Time {
@@ -135,12 +135,6 @@ type weatherState struct {
 	Humidity    float32            `bson:"humidity,omitempty"`   // Humidity, %
 	Rain        float32            `bson:"rain,omitempty"`       // Rain volume for the last hours
 	Cloudiness  float32            `bson:"cloudiness,omitempty"` // Cloudiness, %
-}
-
-// Bedroom stores information about the bedroom.
-type bedroomState struct {
-	Temp float32 `bson:"temp,omitempty"` // Temperature, Celsius
-	Fan  byte    `bson:"fan,omitempty"`  // On, Off (1, 0)
 }
 
 type wind struct {
