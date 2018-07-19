@@ -16,9 +16,9 @@ Besides solve this very important problem, our small projects has some other goa
 * Fetch Current Weather Worker: Done :grin:
 * Fetch Weather Forecast and Prediction Worker: Done :grin:
 * Public HTTP FE: Done :grin:
-* Authorzed area: Not Started Done :grin:
+* Authorzed area: Done :grin:
+* Fan control HTTP FE (authorized area): Done :grin:
 * Prediction: Not Started :unamused:
-* Fan control HTTP FE (authorized area): Not Started :unamused:
 * Prediction graphs: Not Started :unamused:
 
 # Stack
@@ -37,7 +37,7 @@ Besides solve this very important problem, our small projects has some other goa
           * [Cloudflare](https://www.cloudflare.com/): Better DNS, DoS protection, edge caching and more
           * [MongoDB](https://www.mongodb.com/): [mongoLab Addon](https://elements.heroku.com/addons/mongolab)
      * Software
-          * [mgo](https://labix.org/mgo)
+          * [globalsign/mgo](https://github.com/globalsign/mgo)
           * [Gonum](https://github.com/gonum/gonum), in particular the [Linear Regression](https://godoc.org/gonum.org/v1/gonum/stat#LinearRegression)
           * [Labstack Echo](https://echo.labstack.com/)
           * [Labstack Echo-Contrib/session](https://github.com/labstack/echo-contrib)
