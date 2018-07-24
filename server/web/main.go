@@ -60,6 +60,9 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(sessions.NewCookieStore(key)))
+	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Level: 5,
+	}))
 
 	// Public Routes.
 	e.File("/", filepath.Join(publicHTML, "index.html"))
