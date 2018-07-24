@@ -1,40 +1,41 @@
 package main
 
-//go:generate gopherjs build main.go -o ../public/js/graph.js -m
+//go:generate gopherjs build main.go -m -o ../public/js/graph.js
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
 	"strconv"
+	"time"
 
-	"github.com/danielfireman/temp-to-go/server/weather"
-
+	"github.com/cathalgarvey/fmtless/encoding/json"
 	charts "github.com/cnguy/gopherjs-frappe-charts"
+	"github.com/gopherjs/gopherjs/js"
+
+	"honnef.co/go/js/xhr"
 )
 
 type weatherResponse struct {
-	Weather []weather.State `json:"weather,omitempty"`
+	Weather []struct {
+		Timestamp time.Time // Timestamp in unix UTC
+		Temp      float64   // Temperature, Celsius
+	} `json:"weather,omitempty"`
 }
 
 func main() {
-	resp, err := http.Get("http://localhost:8080/restricted/weather")
-	if err != nil {
+	req := xhr.NewRequest("GET", "http://localhost:8080/restricted/weather")
+	req.Timeout = 5000
+	req.ResponseType = xhr.ArrayBuffer
+	if err := req.Send(nil); err != nil {
 		println(err)
 		return
 	}
-	if resp.StatusCode != 200 {
-		println("StatusCode:", resp.StatusCode)
+	if req.Status != 200 {
+		println("Not 200")
 		return
 	}
-	defer resp.Body.Close()
-
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
-	println(buf.String())
-
+	b := js.Global.Get("Uint8Array").New(req.Response).Interface().([]byte)
+	println(string(b))
 	var wr weatherResponse
-	if err := json.Unmarshal(buf.Bytes(), &wr); err != nil {
+	if err := json.Unmarshal(b, &wr); err != nil {
 		println(err)
 		return
 	}
@@ -45,7 +46,6 @@ func main() {
 		labels = append(labels, strconv.Itoa(d))
 		temps = append(temps, s.Temp)
 	}
-
 	chartData := charts.NewChartData()
 	chartData.Labels = labels
 	chartData.Datasets = []*charts.Dataset{
