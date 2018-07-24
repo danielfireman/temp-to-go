@@ -1,22 +1,31 @@
 {{define "main"}}
 <html>
 
+<head>
+    <meta charset="utf-8">
+    <title>Welcome to temp-to-go</title>
+</head>
+
 <body>
     <h1>Welcome!</h1>
-    <hr>
-    Current Fan Status: <b>{{.Speed}}</b>    
-    <form method="post" action={{.Action}}>
-        Update Status:
-        {{range .Opts}}
-            <input type="radio" name={{.Name}} value={{.Value}} checked>{{.Label}}
-        {{end}}
-        <button type="submit">Submit</button>
-    </form>
-    <hr>
-    <br>
     <form method="post" action="/restricted/logout">
         <button type="submit">Logout</button>
     </form>
+    <hr>
+    Current Fan Status:
+    <b>{{.Speed}}</b>
+    <form method="post" action={{.Action}}>
+        Update Status: {{range .Opts}}
+        <input type="radio" name={{.Name}} value={{.Value}} checked>{{.Label}} {{end}}
+        <button type="submit">Submit</button>
+    </form>    
+    <hr>
+    <b>Charts</b>
+    <div id="chart"></div>
+
+    <!-- Imports (must stay at the end) -->
+    <script src="https://unpkg.com/frappe-charts@0.0.7/dist/frappe-charts.min.iife.js"></script>
+    <script src="/../js/graph.js" data-cover></script>
 </body>
 
 </html>

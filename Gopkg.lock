@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/cnguy/gopherjs-frappe-charts"
+  packages = [".","utils"]
+  revision = "816fd83f08bcdd5ae583c6fd97a3d093fb08aa49"
+  version = "0.0.4"
+
+[[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
@@ -12,6 +18,12 @@
   name = "github.com/globalsign/mgo"
   packages = [".","bson","internal/json","internal/sasl","internal/scram"]
   revision = "113d3961e7311526535a1ef7042196563d442761"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gopherjs/gopherjs"
+  packages = ["js"]
+  revision = "0892b62f0d9fb5857760c3cfca837207185117ee"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -88,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cff00a091a0344ff322aa059a78c7dbbb6d391cbd0cdc236b6295474a36b6e72"
+  inputs-digest = "1de91d0140ce2eee405b02e7d2227fc69752849cb96dca662ebd1ff17ca56b52"
   solver-name = "gps-cdcl"
   solver-version = 1

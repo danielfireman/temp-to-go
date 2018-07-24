@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/status"
@@ -63,15 +64,23 @@ func main() {
 	// Public Routes.
 	e.File("/", filepath.Join(publicHTML, "index.html"))
 	e.File("/favicon.ico", filepath.Join(publicHTML, "favicon.ico"))
-	e.Static("/public", publicHTML)
+	e.Static("/", publicHTML)
+	//e.Static("/js", filepath.Join(publicHTML, "js"))
 	e.POST("/indoortemp", bedroomapi.TempHandlerFunc(key, sdb))
 	e.POST("/login", loginHandlerFunc(userPasswd))
 
 	// Routes which should only be accessed after login.
-	restricted := e.Group(restrictedPath, restrictedMiddleware)
+	restricted := e.Group(restrictedPath, restrictedMiddleware, middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"https://mybedroom.live"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		Skipper: func(c echo.Context) bool {
+			return strings.HasPrefix(c.Request().Host, "localhost")
+		},
+	}))
 	restricted.GET("", mainRestrictedHandlerFunc(fan))
 	restricted.POST("/fan", fanHandlerFunc(fan))
 	restricted.POST("/logout", logoutHandler)
+	restricted.GET("/weather", weatherHandlerFunc(sdb))
 
 	// Starting server.
 	port := os.Getenv("PORT")

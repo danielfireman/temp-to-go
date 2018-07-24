@@ -93,7 +93,7 @@ func toState(owmResp owmCurrWeatherResponse) State {
 		Humidity:   round(owmResp.Main.Humidity),
 		Rain:       round(owmResp.Rain.ThreeHours),
 		Cloudiness: round(owmResp.Clouds.All),
-		Timestamp:  owmResp.DT,
+		Timestamp:  time.Unix(owmResp.DT, 0),
 	}
 }
 
@@ -137,6 +137,6 @@ type weather struct {
 // round receives a float64, rounds it to 4 most signigicant digits (max) and returns it as
 // float32. Mostly used to decrease massive (unnecessary) precision of float64 and thus
 // to decrease storage requirements.
-func round(f float64) float32 {
-	return float32(math.Round(f/0.0001) * 0.0001)
+func round(f float64) float64 {
+	return float64(math.Round(f/0.0001) * 0.0001)
 }
