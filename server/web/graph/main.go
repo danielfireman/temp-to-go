@@ -21,7 +21,7 @@ type weatherResponse struct {
 }
 
 func main() {
-	req := xhr.NewRequest("GET", "http://localhost:8080/restricted/weather")
+	req := xhr.NewRequest("GET", "/restricted/weather")
 	req.Timeout = 5000
 	req.ResponseType = xhr.ArrayBuffer
 	if err := req.Send(nil); err != nil {
