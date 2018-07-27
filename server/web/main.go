@@ -66,7 +66,6 @@ func main() {
 	e.File("/", filepath.Join(publicHTML, "index.html"))
 	e.File("/favicon.ico", filepath.Join(publicHTML, "favicon.ico"))
 	e.Static("/", publicHTML)
-	//e.Static("/js", filepath.Join(publicHTML, "js"))
 	e.POST("/indoortemp", bedroomapi.TempHandlerFunc(key, sdb))
 	e.POST("/login", loginHandlerFunc(userPasswd))
 
