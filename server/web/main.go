@@ -60,9 +60,7 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(sessions.NewCookieStore(key)))
-	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Level: 5,
-	}))
+	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{Level: 5}))
 
 	// Public Routes.
 	e.File("/", filepath.Join(publicHTML, "index.html"))
@@ -80,10 +78,15 @@ func main() {
 			return strings.HasPrefix(c.Request().Host, "localhost")
 		},
 	}))
-	restricted.GET("", mainRestrictedHandlerFunc(fan))
-	restricted.POST("/fan", fanHandlerFunc(fan))
+
+	restrictedMainHandler := restrictedMainHandler{fan}
+	weatherHandler := weatherHandler{sdb}
+	fanHandler := fanHandler{fan}
+
+	restricted.GET("", restrictedMainHandler.handle)
+	restricted.POST("/fan", fanHandler.handle)
 	restricted.POST("/logout", logoutHandler)
-	restricted.GET("/weather", weatherHandlerFunc(sdb))
+	restricted.GET("/weather", weatherHandler.handle)
 
 	// Starting server.
 	port := os.Getenv("PORT")

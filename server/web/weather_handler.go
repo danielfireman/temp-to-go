@@ -9,16 +9,18 @@ import (
 	"github.com/labstack/echo"
 )
 
-func weatherHandlerFunc(db *status.DB) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var resp weatherResponse
-		var err error
-		resp.Weather, err = db.FetchWeather(time.Now().Add(-24*time.Hour), time.Now())
-		if err != nil {
-			return c.NoContent(http.StatusInternalServerError)
-		}
-		return c.JSON(http.StatusOK, resp)
+type weatherHandler struct {
+	db *status.DB
+}
+
+func (h *weatherHandler) handle(c echo.Context) error {
+	var resp weatherResponse
+	var err error
+	resp.Weather, err = h.db.FetchWeather(time.Now().Add(-24*time.Hour), time.Now())
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
 	}
+	return c.JSON(http.StatusOK, resp)
 }
 
 type weatherResponse struct {
