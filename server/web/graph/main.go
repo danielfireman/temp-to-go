@@ -50,10 +50,6 @@ func main() {
 			"Temperature (Celsius)",
 			wr.Temp,
 		)}
-	lineOpts := js.Global.Get("Object").New()
-	lineOpts.Set("areaFill", "1")
-	chartData.Set("lineOptions", lineOpts)
-	println(chartData)
 	lc := charts.NewLineChart("#chart", chartData)
 	lc.RegionFill = 1
 	lc.Render()
