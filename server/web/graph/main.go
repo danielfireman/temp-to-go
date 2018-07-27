@@ -3,9 +3,6 @@ package main
 //go:generate gopherjs build main.go -m -o ../public/js/graph.js
 
 import (
-	"strconv"
-	"time"
-
 	"github.com/cathalgarvey/fmtless/encoding/json"
 	charts "github.com/cnguy/gopherjs-frappe-charts"
 	"github.com/gopherjs/gopherjs/js"
@@ -14,17 +11,22 @@ import (
 )
 
 type weatherResponse struct {
-	Weather []struct {
-		Timestamp time.Time // Timestamp in unix UTC
-		Temp      float64   // Temperature, Celsius
-	} `json:"weather,omitempty"`
+	Hour []string  `json:"hour,omitempty"`
+	Temp []float64 `json:"temp,omitempty"`
 }
 
+const timezoneHeader = "TZ"
+
 func main() {
+	// Fetching the timezone.
+	tz := js.Global.Get("jstz").Call("determine").Call("name").String()
+
+	// Issuing the request.
 	req := xhr.NewRequest("GET", "/restricted/weather")
 	req.Timeout = 5000
 	req.ResponseType = xhr.ArrayBuffer
-	if err := req.Send(nil); err != nil {
+	req.SetRequestHeader("TZ", tz)
+	if err := req.Send(tz); err != nil {
 		println(err)
 		return
 	}
@@ -39,20 +41,20 @@ func main() {
 		println(err)
 		return
 	}
-	var temps []float64
-	var labels []string
-	for _, s := range wr.Weather {
-		d := s.Timestamp.Hour()
-		labels = append(labels, strconv.Itoa(d))
-		temps = append(temps, s.Temp)
-	}
 	chartData := charts.NewChartData()
-	chartData.Labels = labels
+	chartData.Labels = wr.Hour
+	chartData.SpecificValues = []*charts.SpecificValue{charts.NewSpecificValue("", "solid", 0)}
+	// Workaround to set the minimum value: https://github.com/frappe/charts/issues/86
 	chartData.Datasets = []*charts.Dataset{
 		charts.NewDataset(
-			"Weather",
-			temps,
+			"Temperature (Celsius)",
+			wr.Temp,
 		)}
-
-	_ = charts.NewLineChart("#chart", chartData).Render()
+	lineOpts := js.Global.Get("Object").New()
+	lineOpts.Set("areaFill", "1")
+	chartData.Set("lineOptions", lineOpts)
+	println(chartData)
+	lc := charts.NewLineChart("#chart", chartData)
+	lc.RegionFill = 1
+	lc.Render()
 }

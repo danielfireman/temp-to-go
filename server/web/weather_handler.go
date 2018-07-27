@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/status"
-	"github.com/danielfireman/temp-to-go/server/weather"
 	"github.com/labstack/echo"
 )
 
@@ -13,16 +12,29 @@ type weatherHandler struct {
 	db *status.DB
 }
 
+const timezoneHeader = "TZ"
+
 func (h *weatherHandler) handle(c echo.Context) error {
-	var resp weatherResponse
 	var err error
-	resp.Weather, err = h.db.FetchWeather(time.Now().Add(-24*time.Hour), time.Now())
+	ws, err := h.db.FetchWeather(time.Now().Add(-24*time.Hour), time.Now())
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
+	}
+	loc, err := time.LoadLocation(c.Request().Header.Get(timezoneHeader))
+	if err != nil {
+		c.Logger().Error(err)
+		loc = time.UTC
+	}
+	var resp weatherResponse
+	for _, s := range ws {
+		t := s.Timestamp.In(loc)
+		resp.Hour = append(resp.Hour, t.Format("3pm"))
+		resp.Temp = append(resp.Temp, s.Temp)
 	}
 	return c.JSON(http.StatusOK, resp)
 }
 
 type weatherResponse struct {
-	Weather []weather.State `json:"weather,omitempty"`
+	Hour []string  `json:"hour,omitempty"`
+	Temp []float64 `json:"temp,omitempty"`
 }
