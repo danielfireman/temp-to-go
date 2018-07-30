@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/status"
-	"github.com/danielfireman/temp-to-go/server/web/bedroomapi"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
@@ -61,16 +60,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(sessions.NewCookieStore(key)))
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{Level: 5}))
-
-	// Public Routes.
-	e.File("/", filepath.Join(publicHTML, "index.html"))
-	e.File("/favicon.ico", filepath.Join(publicHTML, "favicon.ico"))
-	e.Static("/", publicHTML)
-	e.POST("/indoortemp", bedroomapi.TempHandlerFunc(key, sdb))
-	e.POST("/login", loginHandlerFunc(userPasswd))
-
-	// Routes which should only be accessed after login.
-	restricted := e.Group(restrictedPath, restrictedMiddleware, middleware.CORSWithConfig(middleware.CORSConfig{
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"https://mybedroom.live"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 		Skipper: func(c echo.Context) bool {
@@ -78,13 +68,25 @@ func main() {
 		},
 	}))
 
+	// Public Routes.
+	bedroomAPIHandler := bedroomAPIHandler{key, sdb}
+	loginHandler := loginHandler{userPasswd}
+	e.File("/", filepath.Join(publicHTML, "index.html"))
+	e.File("/favicon.ico", filepath.Join(publicHTML, "favicon.ico"))
+	e.Static("/", publicHTML)
+	e.POST("/indoortemp", bedroomAPIHandler.handle)
+	e.POST("/login", loginHandler.handle)
+
+	// Routes which should only be accessed after login.
+	restricted := e.Group(restrictedPath, loginCheckMiddleware)
+
 	restrictedMainHandler := restrictedMainHandler{fan}
 	weatherHandler := weatherHandler{sdb}
 	fanHandler := fanHandler{fan}
-
+	logoutHandler := logoutHandler{}
 	restricted.GET("", restrictedMainHandler.handle)
 	restricted.POST("/fan", fanHandler.handle)
-	restricted.POST("/logout", logoutHandler)
+	restricted.POST("/logout", logoutHandler.handle)
 	restricted.GET("/weather", weatherHandler.handle)
 
 	// Starting server.
@@ -98,64 +100,6 @@ func main() {
 		WriteTimeout: 5 * time.Minute,
 	}
 	e.Logger.Fatal(e.StartServer(s))
-}
-
-const (
-	loggedInSessionField = "loggedin"
-	sessionName          = "session"
-)
-
-func logoutHandler(c echo.Context) error {
-	sess, err := session.Get(sessionName, c)
-	if err != nil {
-		c.Logger().Errorf("Err getting session: %q\n", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	sess.Options = &sessions.Options{
-		Path:   "/",
-		MaxAge: -1, // MaxAge<0 means delete cookie immediately.
-	}
-	delete(sess.Values, loggedInSessionField)
-	sess.Save(c.Request(), c.Response())
-	return c.Redirect(http.StatusFound, "/")
-}
-
-func loginHandlerFunc(userPasswd string) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		user := c.FormValue("user")
-		passwd := c.FormValue("password")
-		if user+passwd == userPasswd {
-			sess, _ := session.Get(sessionName, c)
-			sess.Options = &sessions.Options{
-				Path:     "/",
-				MaxAge:   86400 * 7,
-				HttpOnly: true,
-			}
-			sess.Values[loggedInSessionField] = true
-			sess.Save(c.Request(), c.Response())
-			return c.Redirect(http.StatusFound, restrictedPath)
-		}
-		return c.NoContent(http.StatusForbidden)
-	}
-}
-
-func restrictedMiddleware(in echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		sess, err := session.Get(sessionName, c)
-		if err != nil {
-			c.Logger().Errorf("Err getting session (%s): %q\n", sessionName, err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-		_, isLoggedIn := sess.Values[loggedInSessionField]
-		if err != nil {
-			c.Logger().Errorf("Err checking login: %q\n", err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-		if isLoggedIn {
-			return in(c)
-		}
-		return c.NoContent(http.StatusForbidden)
-	}
 }
 
 type template struct {
