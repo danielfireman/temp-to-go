@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/danielfireman/temp-to-go/server/status"
 	"github.com/labstack/echo"
@@ -25,7 +26,7 @@ func (h *fanHandler) handle(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 	s := status.FanStatus(byte(i))
-	switch h.fan.UpdateStatus(s) {
+	switch h.fan.UpdateStatus(time.Now(), s) {
 	case nil:
 		return c.Redirect(http.StatusFound, restrictedPath)
 	case status.ErrInvalidFanStatus:

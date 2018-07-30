@@ -31,7 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error retrieving current weather: %q", err)
 	}
-	if err := sdb.StoreWeather(time.Now(), ws); err != nil {
+	if err := sdb.Weather().Store(time.Now(), ws); err != nil {
 		log.Fatalf("Error updating status with current weather: %q", err)
 	}
 	log.Printf("Succefully updated status with current weather: %+v\n", ws)

@@ -74,6 +74,12 @@
   version = "v0.0.3"
 
 [[projects]]
+  name = "github.com/sajari/regression"
+  packages = ["."]
+  revision = "c268e5d9b4c03d0c3aa9b67ee0ecbaf7bd08a6b9"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/valyala/bytebufferpool"
   packages = ["."]
@@ -99,6 +105,12 @@
 
 [[projects]]
   branch = "master"
+  name = "gonum.org/v1/gonum"
+  packages = ["blas","blas/blas64","blas/gonum","floats","internal/asm/c128","internal/asm/f32","internal/asm/f64","internal/math32","lapack","lapack/gonum","lapack/lapack64","mat"]
+  revision = "07dedad3fa08f6410388c30e83f5695ceacbe15a"
+
+[[projects]]
+  branch = "master"
   name = "honnef.co/go/js/util"
   packages = ["."]
   revision = "96b8dd9d16214b6cd9d8c8e84b3a375da4688108"
@@ -112,6 +124,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8bd2521a4f31eee8079c2e32bad757f16991fd3d4914450877b32436a8de7f84"
+  inputs-digest = "982e55ce1f5877b186a864d2fc751e88cb5128e062bc44783aefd9442597027e"
   solver-name = "gps-cdcl"
   solver-version = 1

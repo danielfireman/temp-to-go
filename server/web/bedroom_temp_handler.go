@@ -13,8 +13,8 @@ import (
 )
 
 type bedroomAPIHandler struct {
-	key []byte
-	db  *status.DB
+	key     []byte
+	bedroom status.Bedroom
 }
 
 func (h *bedroomAPIHandler) handle(c echo.Context) error {
@@ -28,12 +28,12 @@ func (h *bedroomAPIHandler) handle(c echo.Context) error {
 		c.Logger().Errorf("Error decrypting request body: %q", err)
 		return c.NoContent(http.StatusForbidden)
 	}
-	temp, err := strconv.ParseFloat(string(d), 32)
+	temp, err := strconv.ParseFloat(string(d), 64)
 	if err != nil {
 		c.Logger().Errorf("Error request body: %q", err)
 		return c.NoContent(http.StatusBadRequest)
 	}
-	if err := h.db.StoreBedroomTemperature(time.Now(), float32(temp)); err != nil {
+	if err := h.bedroom.UpdateTemperature(time.Now(), temp); err != nil {
 		c.Logger().Errorf("StoreBedroomTemperature: %q\n", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}

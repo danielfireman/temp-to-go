@@ -12,7 +12,7 @@ type restrictedMainHandler struct {
 }
 
 func (h *restrictedMainHandler) handle(c echo.Context) error {
-	s, err := h.fan.Status()
+	s, err := h.fan.LastState()
 	if err != nil {
 		c.Logger().Errorf("[main] %q\n", err)
 		return c.NoContent(http.StatusInternalServerError)
@@ -20,7 +20,7 @@ func (h *restrictedMainHandler) handle(c echo.Context) error {
 
 	// Converting the FanSpeed to text.
 	currSpeed := "Off"
-	switch s {
+	switch s.Status {
 	case status.FanLowSpeed:
 		currSpeed = "Low"
 	case status.FanHighSpeed:
