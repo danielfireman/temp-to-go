@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/cathalgarvey/fmtless"
-  packages = [".","encoding/json"]
-  revision = "5077ea9388910b75830078d274e1addafb53711f"
-
-[[projects]]
   name = "github.com/cnguy/gopherjs-frappe-charts"
   packages = [".","utils"]
   revision = "816fd83f08bcdd5ae583c6fd97a3d093fb08aa49"
@@ -118,6 +112,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f440c68b28462806797c7c58f719c4f81d798a9c63b98eb1c5edb2079a1c913d"
+  inputs-digest = "8bd2521a4f31eee8079c2e32bad757f16991fd3d4914450877b32436a8de7f84"
   solver-name = "gps-cdcl"
   solver-version = 1
