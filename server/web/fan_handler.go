@@ -8,6 +8,11 @@ import (
 	"github.com/labstack/echo"
 )
 
+const (
+	fanPath            = "/restricted/fan"
+	fanStatusFieldName = "fanStatus"
+)
+
 type fanHandler struct {
 	fan *status.Fan
 }

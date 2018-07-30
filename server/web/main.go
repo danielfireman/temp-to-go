@@ -19,9 +19,7 @@ import (
 )
 
 const (
-	restrictedPath     = "/restricted"
-	fanPath            = "/restricted/fan"
-	fanStatusFieldName = "fanStatus"
+	restrictedPath = "/restricted"
 )
 
 func main() {
