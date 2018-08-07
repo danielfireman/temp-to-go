@@ -62,11 +62,11 @@ func query(session *Session, field string, start time.Time, finish time.Time) ([
 		if err != nil {
 			return nil, err
 		}
-		var s weather.State
+		var s weatherState
 		if err := bson.Unmarshal(b, &s); err != nil {
 			return nil, err
 		}
-		ret[i] = s
+		ret[i] = fromStore(s, trs[i].Timestamp)
 	}
 	return ret, nil
 }
