@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/weather"
+	"github.com/globalsign/mgo/bson"
 )
 
 const (
@@ -11,7 +12,7 @@ const (
 	forecastField = "forecast"
 )
 
-// WeatherForecast allows the user to update and get information about the weather forecast.
+// ForecastService allows the user to update and get information about the weather forecast.
 type ForecastService struct {
 	session *Session
 }
@@ -32,15 +33,7 @@ func (wf *ForecastService) Update(states ...weather.State) error {
 
 // Fetch fetches a time range of weather forecast samples.
 func (wf *ForecastService) Fetch(start time.Time, finish time.Time) ([]weather.State, error) {
-	trs, err := wf.session.Query(forecastField, start, finish)
-	if err != nil {
-		return nil, err
-	}
-	ret := make([]weather.State, len(trs))
-	for i := range trs {
-		ret[i] = trs[i].Value.(weather.State)
-	}
-	return ret, nil
+	return query(wf.session, forecastField, start, finish)
 }
 
 // WeatherService allows the user to update and get information about the weather.
@@ -55,13 +48,25 @@ func (w *WeatherService) Update(ts time.Time, s weather.State) error {
 
 // Fetch fetches a time range of weather temperatures (which do not include forecasts).
 func (w *WeatherService) Fetch(start time.Time, finish time.Time) ([]weather.State, error) {
-	trs, err := w.session.Query(weatherField, start, finish)
+	return query(w.session, weatherField, start, finish)
+}
+
+func query(session *Session, field string, start time.Time, finish time.Time) ([]weather.State, error) {
+	trs, err := session.Query(field, start, finish)
 	if err != nil {
 		return nil, err
 	}
 	ret := make([]weather.State, len(trs))
 	for i := range trs {
-		ret[i] = trs[i].Value.(weather.State)
+		b, err := bson.Marshal(trs[i].Value)
+		if err != nil {
+			return nil, err
+		}
+		var s weather.State
+		if err := bson.Unmarshal(b, &s); err != nil {
+			return nil, err
+		}
+		ret[i] = s
 	}
 	return ret, nil
 }
