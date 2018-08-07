@@ -22,6 +22,12 @@ type Session struct {
 	col     *mgo.Collection
 }
 
+// NewSession creates a new Session instance, which allows the communication to the underlying
+// timeseries mongo database;
+func NewSession(s *mgo.Session, dbName string) *Session {
+	return &Session{s, dbName, s.DB(dbName).C(statusDBCollectionName)}
+}
+
 // TSRecord represents a value to be added to timeseries database.
 type TSRecord struct {
 	Timestamp time.Time   `bson:"timestamp_hour,omitempty"`
@@ -40,7 +46,7 @@ func Dial(uri string) (*Session, error) {
 	}
 	s.SetMode(mgo.Monotonic, true)
 	dbName := info.Database
-	return &Session{s, dbName, s.DB(dbName).C(statusDBCollectionName)}, nil
+	return NewSession(s, dbName), nil
 }
 
 // Upsert inserts the given data into the timeseries database overriding the data if necessary.
@@ -126,8 +132,7 @@ func (s *Session) Close() {
 func (s *Session) Copy() *Session {
 	c := s.session.Copy()
 	dbName := s.dbName
-	return &Session{c, dbName, c.DB(dbName).C(statusDBCollectionName)}
-
+	return NewSession(c, dbName)
 }
 
 func hourUTC(ts time.Time) time.Time {
