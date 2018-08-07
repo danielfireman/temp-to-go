@@ -18,7 +18,7 @@ Besides solve this very important problem, our small projects has some other goa
 * Public HTTP FE: Done :grin:
 * Authorzed area: Done :grin:
 * Fan control HTTP FE (authorized area): Done :grin:
-* Prediction: Not Started :unamused:
+* Prediction: Done :grin:
 * Prediction graphs: Not Started :unamused:
 
 # Stack
