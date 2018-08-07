@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/danielfireman/temp-to-go/server/status"
+	"github.com/danielfireman/temp-to-go/server/tsmongo"
 	"github.com/danielfireman/temp-to-go/server/weather"
 )
 
@@ -20,18 +20,19 @@ func main() {
 	if mgoURI == "" {
 		log.Fatalf("Invalid MONGODB_URI: %s", mgoURI)
 	}
-	sdb, err := status.DialDB(mgoURI)
+	session, err := tsmongo.Dial(mgoURI)
 	if err != nil {
 		log.Fatalf("Error connecting to status DB: %s", mgoURI)
 	}
-	defer sdb.Close()
+	defer session.Close()
+	weatherService := tsmongo.NewWeatherService(session)
 	log.Println("Connected to StatusDB.")
 
 	ws, err := weatherClient.Current()
 	if err != nil {
 		log.Fatalf("Error retrieving current weather: %q", err)
 	}
-	if err := sdb.Weather().Store(time.Now(), ws); err != nil {
+	if err := weatherService.Update(time.Now(), ws); err != nil {
 		log.Fatalf("Error updating status with current weather: %q", err)
 	}
 	log.Printf("Succefully updated status with current weather: %+v\n", ws)

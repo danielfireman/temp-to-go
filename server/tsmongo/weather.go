@@ -1,11 +1,9 @@
-package status
+package tsmongo
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/weather"
-	"github.com/globalsign/mgo"
 )
 
 const (
@@ -14,62 +12,56 @@ const (
 )
 
 // WeatherForecast allows the user to update and get information about the weather forecast.
-type WeatherForecast struct {
-	db *DB
+type ForecastService struct {
+	session *Session
 }
 
 // Update updates the database with the new information about the weather forecast. This call
 // assumes the weather.State.Timestamp is a future timestamp, so it overrides whichever information is
 // associated to it (it should be none).
-func (wf *WeatherForecast) Update(states ...weather.State) error {
-	bulk := wf.db.collection.Bulk()
-	for _, s := range states {
-		wf.db.bulkStore(bulk, s.Timestamp, forecastField, toStore(s))
+func (wf *ForecastService) Update(states ...weather.State) error {
+	if len(states) == 0 {
+		return nil
 	}
-	_, err := bulk.Run()
-	return err
+	trs := make([]TSRecord, len(states))
+	for i := range states {
+		trs[i] = TSRecord{states[i].Timestamp, states[i]}
+	}
+	return wf.session.Upsert(weatherField, trs...)
 }
 
 // Fetch fetches a time range of weather forecast samples.
-func (wf *WeatherForecast) Fetch(start time.Time, finish time.Time) ([]weather.State, error) {
-	iter := wf.db.iterRange(start, finish, forecastField)
-	var ret []weather.State
-	var d weatherDocument
-	for iter.Next(&d) {
-		ret = append(ret, fromStore(d.Value, d.Timestamp))
+func (wf *ForecastService) Fetch(start time.Time, finish time.Time) ([]weather.State, error) {
+	trs, err := wf.session.Query(forecastField, start, finish)
+	if err != nil {
+		return nil, err
 	}
-	if err := iter.Close(); err != nil {
-		if err == mgo.ErrNotFound {
-			return ret, nil
-		}
-		return nil, fmt.Errorf("Error fetching weather forecast (%v, %v): %q", start, finish, err)
+	ret := make([]weather.State, len(trs))
+	for i := range trs {
+		ret[i] = trs[i].Value.(weather.State)
 	}
 	return ret, nil
 }
 
-// Weather allows the user to update and get information about the weather.
-type Weather struct {
-	db *DB
+// WeatherService allows the user to update and get information about the weather.
+type WeatherService struct {
+	session *Session
 }
 
 // Update updates the StatusDB with the new information about the current weather.
-func (w *Weather) Update(ts time.Time, s weather.State) error {
-	return w.db.store(ts, weatherField, toStore(s))
+func (w *WeatherService) Update(ts time.Time, s weather.State) error {
+	return w.session.Upsert(weatherField, TSRecord{ts, toStore(s)})
 }
 
 // Fetch fetches a time range of weather temperatures (which do not include forecasts).
-func (w *Weather) Fetch(start time.Time, finish time.Time) ([]weather.State, error) {
-	iter := w.db.iterRange(start, finish, weatherField)
-	var ret []weather.State
-	var d weatherDocument
-	for iter.Next(&d) {
-		ret = append(ret, fromStore(d.Value, d.Timestamp))
+func (w *WeatherService) Fetch(start time.Time, finish time.Time) ([]weather.State, error) {
+	trs, err := w.session.Query(weatherField, start, finish)
+	if err != nil {
+		return nil, err
 	}
-	if err := iter.Close(); err != nil {
-		if err == mgo.ErrNotFound {
-			return ret, nil
-		}
-		return nil, fmt.Errorf("Error fetching weather: %q", err)
+	ret := make([]weather.State, len(trs))
+	for i := range trs {
+		ret[i] = trs[i].Value.(weather.State)
 	}
 	return ret, nil
 }
@@ -127,9 +119,4 @@ type wind struct {
 type weatherDescription struct {
 	Text string `bson:"text,omitempty"` // Weather condition within the group
 	Icon string `bson:"icon,omitempty"` // Weather icon id
-}
-
-type weatherDocument struct {
-	Timestamp time.Time    `bson:"timestamp_hour,omitempty"`
-	Value     weatherState `bson:"value,omitempty"`
 }

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danielfireman/temp-to-go/server/status"
+	"github.com/danielfireman/temp-to-go/server/tsmongo"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
@@ -35,14 +35,16 @@ func main() {
 	if mgoURI == "" {
 		log.Fatalf("Invalid MONGODB_URI: %s", mgoURI)
 	}
-	sdb, err := status.DialDB(mgoURI)
+	tsmongoSession, err := tsmongo.Dial(mgoURI)
 	if err != nil {
 		log.Fatalf("Error connecting to StatusDB: %s", mgoURI)
 	}
-	defer sdb.Close()
+	defer tsmongoSession.Close()
+	fanService := tsmongo.NewFanService(tsmongoSession)
+	bedroomService := tsmongo.NewBedroomService(tsmongoSession)
+	weatherService := tsmongo.NewWeatherService(tsmongoSession)
 
 	publicHTML := filepath.Join(os.Getenv("PUBLIC_HTML"))
-	fan := sdb.Fan()
 
 	// Initializing web framework.
 	e := echo.New()
@@ -67,7 +69,8 @@ func main() {
 	}))
 
 	// Public Routes.
-	bedroomAPIHandler := bedroomAPIHandler{key, sdb}
+
+	bedroomAPIHandler := bedroomAPIHandler{key, bedroomService}
 	loginHandler := loginHandler{userPasswd}
 	e.File("/", filepath.Join(publicHTML, "index.html"))
 	e.File("/favicon.ico", filepath.Join(publicHTML, "favicon.ico"))
@@ -78,9 +81,9 @@ func main() {
 	// Routes which should only be accessed after login.
 	restricted := e.Group(restrictedPath, loginCheckMiddleware)
 
-	restrictedMainHandler := restrictedMainHandler{fan}
-	weatherHandler := weatherHandler{sdb}
-	fanHandler := fanHandler{fan}
+	restrictedMainHandler := restrictedMainHandler{fanService}
+	weatherHandler := weatherHandler{weatherService}
+	fanHandler := fanHandler{fanService}
 	logoutHandler := logoutHandler{}
 	restricted.GET("", restrictedMainHandler.handle)
 	restricted.POST("/fan", fanHandler.handle)

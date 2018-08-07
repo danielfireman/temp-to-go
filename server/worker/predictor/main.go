@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/danielfireman/temp-to-go/server/status"
+	"github.com/danielfireman/temp-to-go/server/tsmongo"
 	"github.com/sajari/regression"
 )
 
@@ -14,12 +14,18 @@ func main() {
 	if mgoURI == "" {
 		log.Fatalf("Invalid MONGODB_URI: %s", mgoURI)
 	}
-	sdb, err := status.DialDB(mgoURI)
+	session, err := tsmongo.Dial(mgoURI)
 	if err != nil {
 		log.Fatalf("Error connecting to status DB: %s", mgoURI)
 	}
-	defer sdb.Close()
-	log.Println("Connected to StatusDB.")
+	log.Println("Connected to timeseries mongo.")
+	defer session.Close()
+
+	bedroomService := tsmongo.NewBedroomService(session)
+	weatherService := tsmongo.NewWeatherService(session)
+	fanService := tsmongo.NewFanService(session)
+	forecastService := tsmongo.NewForecastService(session)
+	predictionService := tsmongo.NewPredictionService(session)
 
 	// Get the last week worth of data.
 	st := time.Now().Add(-7 * 24 * time.Hour)
@@ -32,7 +38,7 @@ func main() {
 	r.SetVar(2, "Timestamp")
 
 	// ### Trainning.
-	bs, err := sdb.Bedroom().FetchState(st, et)
+	bs, err := bedroomService.FetchState(st, et)
 	if err != nil {
 		log.Fatalf("Error fetching past bedroom temperature: %q", err)
 	}
@@ -42,7 +48,7 @@ func main() {
 
 	// Normalize the start and end timestamp (to match the bedroom ones)
 	st, et = bs[0].Timestamp, bs[len(bs)-1].Timestamp
-	ws, err := sdb.Weather().Fetch(st, et)
+	ws, err := weatherService.Fetch(st, et)
 	if err != nil {
 		log.Fatalf("Error fetching past weather: %q", err)
 	}
@@ -50,7 +56,7 @@ func main() {
 	for _, s := range ws {
 		wsMap[s.Timestamp] = s.Temp
 	}
-	fs, err := sdb.Fan().FetchState(st, et)
+	fs, err := fanService.FetchState(st, et)
 	if err != nil {
 		log.Fatalf("Error fetching fan state: %q", err)
 	}
@@ -70,19 +76,19 @@ func main() {
 	r.Run()
 
 	// Predict the next 24 hours and updates the database.
-	forecast, err := sdb.WeatherForecast().Fetch(et, et.Add(24*time.Hour))
+	forecast, err := forecastService.Fetch(et, et.Add(24*time.Hour))
 	if err != nil {
 		log.Fatal(err)
 	}
-	var predictions []status.Prediction
+	var predictions []tsmongo.Prediction
 	for _, f := range forecast {
-		predictions = append(predictions, status.Prediction{
+		predictions = append(predictions, tsmongo.Prediction{
 			TempFanOff:  predOrDie(r, f.Temp, 0),
 			TempFanLow:  predOrDie(r, f.Temp, 1),
 			TempFanHigh: predOrDie(r, f.Temp, 2),
 		})
 	}
-	if err := sdb.Predictions().Update(predictions...); err != nil {
+	if err := predictionService.Update(predictions...); err != nil {
 		log.Fatalf("Error updating predictions:%q", err)
 	}
 }
@@ -95,7 +101,7 @@ func predOrDie(r regression.Regression, temp, fanMode float64) float64 {
 	return p
 }
 
-func fillFanState(fs []status.FanState, st, et time.Time) map[time.Time]float64 {
+func fillFanState(fs []tsmongo.FanState, st, et time.Time) map[time.Time]float64 {
 	m := make(map[time.Time]float64)
 	// First populate the map with what we have.
 	for _, s := range fs {
@@ -116,11 +122,11 @@ func fillFanState(fs []status.FanState, st, et time.Time) map[time.Time]float64 
 	return m
 }
 
-func fanStatusToFloat(s status.FanStatus) float64 {
+func fanStatusToFloat(s tsmongo.FanStatus) float64 {
 	switch s {
-	case status.FanLowSpeed:
+	case tsmongo.FanLowSpeed:
 		return 1
-	case status.FanHighSpeed:
+	case tsmongo.FanHighSpeed:
 		return 2
 	default:
 		return 0

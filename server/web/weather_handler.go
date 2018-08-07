@@ -4,19 +4,19 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/danielfireman/temp-to-go/server/status"
+	"github.com/danielfireman/temp-to-go/server/tsmongo"
 	"github.com/labstack/echo"
 )
 
 type weatherHandler struct {
-	db *status.DB
+	weatherService *tsmongo.WeatherService
 }
 
 const timezoneHeader = "TZ"
 
 func (h *weatherHandler) handle(c echo.Context) error {
 	var err error
-	ws, err := h.db.FetchWeather(time.Now().Add(-24*time.Hour), time.Now())
+	ws, err := h.weatherService.Fetch(time.Now().Add(-24*time.Hour), time.Now())
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}

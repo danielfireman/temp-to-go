@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/danielfireman/temp-to-go/server/status"
+	"github.com/danielfireman/temp-to-go/server/tsmongo"
 	"github.com/labstack/echo"
 )
 
 type bedroomAPIHandler struct {
-	key     []byte
-	bedroom status.Bedroom
+	key            []byte
+	bedroomService *tsmongo.BedroomService
 }
 
 func (h *bedroomAPIHandler) handle(c echo.Context) error {
@@ -33,7 +33,7 @@ func (h *bedroomAPIHandler) handle(c echo.Context) error {
 		c.Logger().Errorf("Error request body: %q", err)
 		return c.NoContent(http.StatusBadRequest)
 	}
-	if err := h.bedroom.UpdateTemperature(time.Now(), temp); err != nil {
+	if err := h.bedroomService.UpdateTemperature(time.Now(), temp); err != nil {
 		c.Logger().Errorf("StoreBedroomTemperature: %q\n", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}

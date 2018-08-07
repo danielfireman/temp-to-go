@@ -1,23 +1,25 @@
-package status
+package tsmongo
 
 import "time"
 
 const predictionField = "pred"
 
-// Predictions allows users to store or fetch predictions.
-type Predictions struct {
-	db *DB
+// PredictionService allows users to store or fetch predictions.
+type PredictionService struct {
+	session *Session
 }
 
 // Update stores the passed-in predictions. The call overrides any
 // previously stored predictions.
-func (p *Predictions) Update(ps ...Prediction) error {
-	bulk := p.db.collection.Bulk()
-	for _, s := range ps {
-		p.db.bulkStore(bulk, s.Timestamp, predictionField, ps)
+func (p *PredictionService) Update(ps ...Prediction) error {
+	if len(ps) == 0 {
+		return nil
 	}
-	_, err := bulk.Run()
-	return err
+	trs := make([]TSRecord, len(ps))
+	for i := range ps {
+		trs[i] = TSRecord{ps[i].Timestamp, ps[i]}
+	}
+	return p.session.Upsert(predictionField, trs...)
 }
 
 // Prediction represents a prediction of a bedroom temperature at a certain time in
@@ -27,9 +29,4 @@ type Prediction struct {
 	TempFanOff  float64   `bson:"fan_off,omitempty"`
 	TempFanLow  float64   `bson:"fan_low,omitempty"`
 	TempFanHigh float64   `bson:"fan_high,omitempty"`
-}
-
-type predictionDocument struct {
-	Timestamp time.Time  `bson:"timestamp_hour,omitempty"`
-	Value     Prediction `bson:"value,omitempty"`
 }

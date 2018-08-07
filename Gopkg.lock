@@ -16,7 +16,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/globalsign/mgo"
-  packages = [".","bson","internal/json","internal/sasl","internal/scram"]
+  packages = [".","bson","dbtest","internal/json","internal/sasl","internal/scram"]
   revision = "113d3961e7311526535a1ef7042196563d442761"
 
 [[projects]]
@@ -99,6 +99,12 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
@@ -108,6 +114,12 @@
   name = "gonum.org/v1/gonum"
   packages = ["blas","blas/blas64","blas/gonum","floats","internal/asm/c128","internal/asm/f32","internal/asm/f64","internal/math32","lapack","lapack/gonum","lapack/lapack64","mat"]
   revision = "07dedad3fa08f6410388c30e83f5695ceacbe15a"
+
+[[projects]]
+  branch = "v2"
+  name = "gopkg.in/tomb.v2"
+  packages = ["."]
+  revision = "d5d1b5820637886def9eef33e03a27a9f166942c"
 
 [[projects]]
   branch = "master"
@@ -124,6 +136,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "982e55ce1f5877b186a864d2fc751e88cb5128e062bc44783aefd9442597027e"
+  inputs-digest = "367ca541e791c186d7803591ea30e6bd637281d6685cc09c5eba5559e5a08aca"
   solver-name = "gps-cdcl"
   solver-version = 1

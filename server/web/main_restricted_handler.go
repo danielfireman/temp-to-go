@@ -3,12 +3,12 @@ package main
 import (
 	"net/http"
 
-	"github.com/danielfireman/temp-to-go/server/status"
+	"github.com/danielfireman/temp-to-go/server/tsmongo"
 	"github.com/labstack/echo"
 )
 
 type restrictedMainHandler struct {
-	fan *status.Fan
+	fan *tsmongo.FanService
 }
 
 func (h *restrictedMainHandler) handle(c echo.Context) error {
@@ -21,16 +21,16 @@ func (h *restrictedMainHandler) handle(c echo.Context) error {
 	// Converting the FanSpeed to text.
 	currSpeed := "Off"
 	switch s.Status {
-	case status.FanLowSpeed:
+	case tsmongo.FanLowSpeed:
 		currSpeed = "Low"
-	case status.FanHighSpeed:
+	case tsmongo.FanHighSpeed:
 		currSpeed = "High"
 	}
 
 	// Struct containing options to draw the radio button options.
 	type fanOpt struct {
 		Label string
-		Value status.FanStatus
+		Value tsmongo.FanStatus
 		Name  string
 	}
 	return c.Render(http.StatusOK, "main", struct {
@@ -40,9 +40,9 @@ func (h *restrictedMainHandler) handle(c echo.Context) error {
 	}{
 		Speed: currSpeed,
 		Opts: []fanOpt{
-			{"Off", status.FanOff, fanStatusFieldName},
-			{"Low", status.FanLowSpeed, fanStatusFieldName},
-			{"High", status.FanHighSpeed, fanStatusFieldName},
+			{"Off", tsmongo.FanOff, fanStatusFieldName},
+			{"Low", tsmongo.FanLowSpeed, fanStatusFieldName},
+			{"High", tsmongo.FanHighSpeed, fanStatusFieldName},
 		},
 		Action: fanPath,
 	})

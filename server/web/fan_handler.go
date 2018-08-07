@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/danielfireman/temp-to-go/server/status"
+	"github.com/danielfireman/temp-to-go/server/tsmongo"
 	"github.com/labstack/echo"
 )
 
@@ -15,7 +15,7 @@ const (
 )
 
 type fanHandler struct {
-	fan *status.Fan
+	fanService *tsmongo.FanService
 }
 
 // FanHandlerFunc is a handler for APIs relate to the fan.
@@ -25,11 +25,11 @@ func (h *fanHandler) handle(c echo.Context) error {
 		c.Logger().Errorf("[/restricted/fan] Invalid fan status: %d\n", i)
 		return c.NoContent(http.StatusBadRequest)
 	}
-	s := status.FanStatus(byte(i))
-	switch h.fan.UpdateStatus(time.Now(), s) {
+	s := tsmongo.FanStatus(byte(i))
+	switch h.fanService.UpdateStatus(time.Now(), s) {
 	case nil:
 		return c.Redirect(http.StatusFound, restrictedPath)
-	case status.ErrInvalidFanStatus:
+	case tsmongo.ErrInvalidFanStatus:
 		c.Logger().Errorf("[/restricted/fan] Invalid fan status: %d %v %s\n", i, s, c.FormValue(fanStatusFieldName))
 		return c.NoContent(http.StatusBadRequest)
 	default:
