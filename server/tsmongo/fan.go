@@ -31,7 +31,8 @@ func (f FanService) LastState() (FanState, error) {
 	ts, err := f.session.Last(fanField)
 	switch err {
 	case nil:
-		return FanState{ts.Timestamp, ts.Value.(FanStatus)}, nil
+		s := ts.Value.(int)
+		return FanState{ts.Timestamp, FanStatus(s)}, nil
 	case mgo.ErrNotFound:
 		return FanState{time.Now(), FanOff}, nil
 	default:
@@ -47,13 +48,14 @@ func (f FanService) FetchState(start time.Time, finish time.Time) ([]FanState, e
 	}
 	ret := make([]FanState, len(trs))
 	for i := range trs {
-		ret[i] = FanState{trs[i].Timestamp, trs[i].Value.(FanStatus)}
+		s := trs[i].Value.(int)
+		ret[i] = FanState{trs[i].Timestamp, FanStatus(s)}
 	}
 	return ret, nil
 }
 
 // FanStatus represents the speed/power of the bedroom fan.
-type FanStatus byte
+type FanStatus int
 
 // Enumerates the three possibilites for the fan speed.
 const (
