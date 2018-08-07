@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/danielfireman/temp-to-go/server/tsmongo"
 	"github.com/danielfireman/temp-to-go/server/weather"
@@ -32,7 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error retrieving current weather: %q", err)
 	}
-	if err := weatherService.Update(time.Now(), ws); err != nil {
+	if err := weatherService.Update(ws); err != nil {
 		log.Fatalf("Error updating status with current weather: %q", err)
 	}
 	log.Printf("Succefully updated status with current weather: %+v\n", ws)

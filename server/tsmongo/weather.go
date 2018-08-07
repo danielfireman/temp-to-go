@@ -42,8 +42,8 @@ type WeatherService struct {
 }
 
 // Update updates the StatusDB with the new information about the current weather.
-func (w *WeatherService) Update(ts time.Time, s weather.State) error {
-	return w.session.Upsert(weatherField, TSRecord{ts, toStore(s)})
+func (w *WeatherService) Update(s weather.State) error {
+	return w.session.Upsert(weatherField, TSRecord{s.Timestamp, toStore(s)})
 }
 
 // Fetch fetches a time range of weather temperatures (which do not include forecasts).
