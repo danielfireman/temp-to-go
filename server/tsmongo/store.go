@@ -143,29 +143,29 @@ func hourUTC(ts time.Time) time.Time {
 // NewBedroomService creates a new BedroomService, which allows to interact with the bedroom field
 // of the timeseries.
 func NewBedroomService(s *Session) *BedroomService {
-	return &BedroomService{s.Copy()}
+	return &BedroomService{s}
 }
 
 // NewFanService creates a new BedroomService, which allows to interact with the fan field
 // of the timeseries.
 func NewFanService(s *Session) *FanService {
-	return &FanService{s.Copy()}
+	return &FanService{s}
 }
 
 // NewWeatherService creates a new WeatherService, which allows to interact with the weather field
 // of the timeseries.
 func NewWeatherService(s *Session) *WeatherService {
-	return &WeatherService{s.Copy()}
+	return &WeatherService{s}
 }
 
 // NewForecastService creates a new ForecastService, which allows to interact with the forecast field
 // of the timeseries.
 func NewForecastService(s *Session) *ForecastService {
-	return &ForecastService{s.Copy()}
+	return &ForecastService{s}
 }
 
 // NewPredictionService creates a new PredictionService, which allows to interact with the predictions field
 // of the timeseries.
 func NewPredictionService(s *Session) *PredictionService {
-	return &PredictionService{s.Copy()}
+	return &PredictionService{s}
 }
