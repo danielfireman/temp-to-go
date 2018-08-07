@@ -23,7 +23,7 @@ func (f FanService) UpdateStatus(t time.Time, s FanStatus) error {
 		return ErrInvalidFanStatus
 	}
 
-	return f.session.Upsert(fanField, TSRecord{time.Now(), s})
+	return f.session.Upsert(fanField, TSRecord{t, s})
 }
 
 // LastState returns the last fan status.
