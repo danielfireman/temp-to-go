@@ -3,6 +3,8 @@ package tsmongo
 import (
 	"fmt"
 	"time"
+
+	"github.com/globalsign/mgo"
 )
 
 const fanField = "fan"
@@ -27,10 +29,14 @@ func (f FanService) UpdateStatus(t time.Time, s FanStatus) error {
 // LastState returns the last fan status.
 func (f FanService) LastState() (FanState, error) {
 	ts, err := f.session.Last(fanField)
-	if err != nil {
+	switch err {
+	case nil:
+		return FanState{ts.Timestamp, ts.Value.(FanStatus)}, nil
+	case mgo.ErrNotFound:
+		return FanState{time.Now(), FanOff}, nil
+	default:
 		return FanState{time.Now(), FanOff}, err
 	}
-	return FanState{ts.Timestamp, ts.Value.(FanStatus)}, nil
 }
 
 // FetchState returns the fan status updates in the considered period. Important to n

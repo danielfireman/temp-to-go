@@ -111,7 +111,7 @@ func (s *Session) Last(field string) (TSRecord, error) {
 	var r TSRecord
 	err := s.col.Find(bson.M{typeField: field}).Sort("-" + timestampIndexField).One(&r)
 	if err != nil {
-		return TSRecord{}, fmt.Errorf("There isError fetching the last element in the field (%s): %q", field, err)
+		return TSRecord{}, err
 	}
 	return r, nil
 }
