@@ -28,7 +28,7 @@ func (wf *ForecastService) Update(states ...weather.State) error {
 	for i := range states {
 		trs[i] = TSRecord{states[i].Timestamp, states[i]}
 	}
-	return wf.session.Upsert(weatherField, trs...)
+	return wf.session.Upsert(forecastField, trs...)
 }
 
 // Fetch fetches a time range of weather forecast samples.
