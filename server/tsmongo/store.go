@@ -25,7 +25,7 @@ type Session struct {
 // NewSession creates a new Session instance, which allows the communication to the underlying
 // timeseries mongo database;
 func NewSession(s *mgo.Session, dbName string) *Session {
-	return &Session{s, dbName, s.DB(dbName).C(statusDBCollectionName)}
+	return &Session{s.Copy(), dbName, s.DB(dbName).C(statusDBCollectionName)}
 }
 
 // TSRecord represents a value to be added to timeseries database.
