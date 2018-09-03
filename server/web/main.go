@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/danielfireman/temp-to-go/server/tsmongo"
@@ -60,16 +59,8 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(sessions.NewCookieStore(key)))
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{Level: 5}))
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"https://mybedroom.live"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-		Skipper: func(c echo.Context) bool {
-			return strings.HasPrefix(c.Request().Host, "localhost")
-		},
-	}))
 
 	// Public Routes.
-
 	bedroomAPIHandler := bedroomAPIHandler{key, bedroomService}
 	loginHandler := loginHandler{userPasswd}
 	e.File("/", filepath.Join(publicHTML, "index.html"))
