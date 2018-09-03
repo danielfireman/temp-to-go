@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -19,10 +20,12 @@ type bedroomAPIHandler struct {
 
 func (h *bedroomAPIHandler) handle(c echo.Context) error {
 	var body []byte
-	if err := c.Bind(&body); err != nil {
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
 		c.Logger().Errorf("Error reading request body: %q", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	defer c.Request().Body.Close()
 	d, err := decrypt(body, h.key)
 	if err != nil {
 		c.Logger().Errorf("Error decrypting request body: %q", err)
