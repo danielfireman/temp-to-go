@@ -53,12 +53,12 @@ func main() {
 }
 
 var client = &http.Client{
-	Timeout: time.Second * 10,
+	Timeout: time.Second * 50,
 	Transport: &http.Transport{
 		Dial: (&net.Dialer{
-			Timeout: 5 * time.Second,
+			Timeout: 50 * time.Second,
 		}).Dial,
-		TLSHandshakeTimeout: 5 * time.Second,
+		TLSHandshakeTimeout: 50 * time.Second,
 	},
 }
 
@@ -71,6 +71,7 @@ func send(u string, temp float64, key []byte) error {
 	if err != nil {
 		return fmt.Errorf("Error trying to send POST request: %q. URL:%s", err, u)
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		b, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("Invalid status code in POST request: %d. Message: %s", resp.StatusCode, string(b))
