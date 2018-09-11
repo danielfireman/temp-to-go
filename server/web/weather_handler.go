@@ -16,7 +16,7 @@ const timezoneHeader = "TZ"
 
 func (h *weatherHandler) handle(c echo.Context) error {
 	var err error
-	ws, err := h.weatherService.Fetch(time.Now().Add(-24*time.Hour), time.Now())
+	ws, err := h.weatherService.Fetch(time.Now().Add(-25*time.Hour), time.Now())
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}

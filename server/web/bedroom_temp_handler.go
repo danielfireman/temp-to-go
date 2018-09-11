@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"errors"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -44,7 +45,7 @@ func (h *bedroomAPIHandler) handlePost(c echo.Context) error {
 }
 
 func (h *bedroomAPIHandler) handleGet(c echo.Context) error {
-	bs, err := h.bedroomService.FetchState(time.Now().Add(-24*time.Hour), time.Now())
+	bs, err := h.bedroomService.FetchState(time.Now().Add(-25*time.Hour), time.Now())
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
@@ -54,10 +55,11 @@ func (h *bedroomAPIHandler) handleGet(c echo.Context) error {
 		loc = time.UTC
 	}
 	var resp bedroomTempResponse
+
 	for _, s := range bs {
 		t := s.Timestamp.In(loc)
 		resp.Hour = append(resp.Hour, t.Format("3pm"))
-		resp.Temp = append(resp.Temp, s.Temperature)
+		resp.Temp = append(resp.Temp, float64(math.Round(s.Temperature)))
 	}
 	return c.JSON(http.StatusOK, resp)
 }
