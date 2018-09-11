@@ -66,7 +66,7 @@ func main() {
 	e.File("/", filepath.Join(publicHTML, "index.html"))
 	e.File("/favicon.ico", filepath.Join(publicHTML, "favicon.ico"))
 	e.Static("/", publicHTML)
-	e.POST("/indoortemp", bedroomAPIHandler.handle)
+	e.POST("/indoortemp", bedroomAPIHandler.handlePost)
 	e.POST("/login", loginHandler.handle)
 
 	// Routes which should only be accessed after login.
@@ -80,6 +80,7 @@ func main() {
 	restricted.POST("/fan", fanHandler.handle)
 	restricted.POST("/logout", logoutHandler.handle)
 	restricted.GET("/weather", weatherHandler.handle)
+	restricted.GET("/indoortemp", bedroomAPIHandler.handleGet)
 
 	// Starting server.
 	port := os.Getenv("PORT")

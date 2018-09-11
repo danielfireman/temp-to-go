@@ -18,7 +18,7 @@ type bedroomAPIHandler struct {
 	bedroomService *tsmongo.BedroomService
 }
 
-func (h *bedroomAPIHandler) handle(c echo.Context) error {
+func (h *bedroomAPIHandler) handlePost(c echo.Context) error {
 	var body []byte
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
@@ -41,6 +41,30 @@ func (h *bedroomAPIHandler) handle(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	return nil
+}
+
+func (h *bedroomAPIHandler) handleGet(c echo.Context) error {
+	bs, err := h.bedroomService.FetchState(time.Now().Add(-24*time.Hour), time.Now())
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	loc, err := time.LoadLocation(c.Request().Header.Get(timezoneHeader))
+	if err != nil {
+		c.Logger().Error(err)
+		loc = time.UTC
+	}
+	var resp bedroomTempResponse
+	for _, s := range bs {
+		t := s.Timestamp.In(loc)
+		resp.Hour = append(resp.Hour, t.Format("3pm"))
+		resp.Temp = append(resp.Temp, s.Temperature)
+	}
+	return c.JSON(http.StatusOK, resp)
+}
+
+type bedroomTempResponse struct {
+	Hour []string  `json:"hour,omitempty"`
+	Temp []float64 `json:"temp,omitempty"`
 }
 
 func decrypt(ciphertext []byte, key []byte) ([]byte, error) {
