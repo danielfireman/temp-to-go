@@ -9,7 +9,7 @@ import (
 	"honnef.co/go/js/xhr"
 )
 
-type weatherResponse struct {
+type tempResponse struct {
 	*js.Object
 	Hour []string  `js:"hour"`
 	Temp []float64 `js:"temp"`
@@ -27,19 +27,36 @@ func main() {
 	req.SetRequestHeader("Content-Type", "application/json")
 	req.SetRequestHeader("TZ", tz)
 	req.ResponseType = xhr.JSON
-	if err := req.Send(tz); err != nil {
+	if err := req.Send(nil); err != nil {
 		println(err)
 		return
 	}
-	wr := &weatherResponse{Object: req.Response}
+	ws := &tempResponse{Object: req.Response}
+
+	reqBS := xhr.NewRequest("GET", "/restricted/indoortemp")
+	reqBS.Timeout = 5000
+	reqBS.SetRequestHeader("Content-Type", "application/json")
+	reqBS.SetRequestHeader("TZ", tz)
+	reqBS.ResponseType = xhr.JSON
+	if err := reqBS.Send(nil); err != nil {
+		println(err)
+		return
+	}
+	bs := &tempResponse{Object: reqBS.Response}
+
 	chartData := charts.NewChartData()
-	chartData.Labels = wr.Hour
+	chartData.Labels = ws.Hour
 	chartData.SpecificValues = []*charts.SpecificValue{charts.NewSpecificValue("", "solid", 0)} // Workaround to set the minimum value: https://github.com/frappe/charts/issues/86
 	chartData.Datasets = []*charts.Dataset{
 		charts.NewDataset(
-			"Temperature (Celsius)",
-			wr.Temp,
-		)}
+			"Outdoor Temperatur (Celsius)",
+			ws.Temp,
+		),
+		charts.NewDataset(
+			"Indoor Temperature (Celsius)",
+			bs.Temp,
+		),
+	}
 	lc := charts.NewLineChart("#chart", chartData)
 	lc.RegionFill = 1
 	lc.Render()
