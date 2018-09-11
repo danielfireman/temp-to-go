@@ -46,6 +46,7 @@ func main() {
 				if err := send(serverURL, tempSensor.Temperature(), key); err != nil {
 					log.Println(err)
 				}
+				fmt.Println("Successfully sent: %f", tempSensor.Temperature())
 			})
 		},
 	)
