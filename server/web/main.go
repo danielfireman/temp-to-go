@@ -63,9 +63,15 @@ func main() {
 	// Public Routes.
 	bedroomAPIHandler := bedroomAPIHandler{key, bedroomService}
 	loginHandler := loginHandler{userPasswd}
-	e.File("/", filepath.Join(publicHTML, "index.html"))
+	e.GET("/", func(c echo.Context) error {
+		return c.Render(http.StatusOK, "login", struct {
+			LoginError string
+		}{
+			LoginError: "",
+		})
+	})
+
 	e.File("/favicon.ico", filepath.Join(publicHTML, "favicon.ico"))
-	e.Static("/", publicHTML)
 	e.POST("/indoortemp", bedroomAPIHandler.handlePost)
 	e.POST("/login", loginHandler.handle)
 
