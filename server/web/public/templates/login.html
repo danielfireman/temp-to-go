@@ -1,8 +1,10 @@
+{{define "login"}}
 <html>
 
 <body>
     <h1>Welcome to My Bedroom Live</h1>
     <h2>Login</h2>
+    {{if .}}<span style="color: #F00">{{.}}</span>{{end}}
     <form method="post" action="/login">
         <hr>
         <label for="user">User name:</label>
@@ -17,3 +19,4 @@
 </body>
 
 </html>
+{{end}}
