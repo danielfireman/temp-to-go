@@ -31,7 +31,7 @@ func (h *loginHandler) handle(c echo.Context) error {
 		sess.Save(c.Request(), c.Response())
 		return c.Redirect(http.StatusFound, restrictedPath)
 	}
-	return c.NoContent(http.StatusForbidden)
+	return c.Render(http.StatusOK, "login", "Invalid credentials. Try again.")
 }
 
 type logoutHandler struct {
@@ -67,6 +67,12 @@ func loginCheckMiddleware(in echo.HandlerFunc) echo.HandlerFunc {
 		if isLoggedIn {
 			return in(c)
 		}
-		return c.NoContent(http.StatusForbidden)
+
+		msg := "Access restricted, please log in first"
+
+		if c.Request().Header.Get("Content-type") == "application/json" {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": msg})
+		}
+		return c.Render(http.StatusOK, "error", msg)
 	}
 }
