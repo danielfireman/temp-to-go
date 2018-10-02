@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -37,6 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	fmt.Printf("Environment Variable Set:\n%+v", spec)
 
 	key := []byte(spec.EncryptionKey)
 	if len(key) != 32 {
